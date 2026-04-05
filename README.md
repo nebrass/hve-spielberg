@@ -68,13 +68,13 @@ hve-spielberg depends on two other Claude Code skills:
 ### Option 1: Skills CLI (Recommended)
 
 ```bash
-npx skills add <github-user>/hve-spielberg
+npx skills add nebrass/hve-spielberg
 ```
 
 ### Option 2: Manual
 
 ```bash
-git clone https://github.com/<github-user>/hve-spielberg.git ~/.claude/skills/hve-spielberg
+git clone https://github.com/nebrass/hve-spielberg.git ~/.claude/skills/hve-spielberg
 ```
 
 ### Option 3: Claude Code Plugin
@@ -84,7 +84,7 @@ Add to your `.claude/settings.json`:
 ```json
 {
   "skills": [
-    "https://github.com/<github-user>/hve-spielberg"
+    "https://github.com/nebrass/hve-spielberg"
   ]
 }
 ```
