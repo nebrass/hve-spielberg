@@ -77,16 +77,12 @@ npx skills add nebrass/hve-spielberg
 git clone https://github.com/nebrass/hve-spielberg.git ~/.claude/skills/hve-spielberg
 ```
 
-### Option 3: Claude Code Plugin
+### Option 3: Git Submodule / Direct Copy
 
-Add to your `.claude/settings.json`:
+Copy the skill files directly into any project's `.claude/skills/` directory:
 
-```json
-{
-  "skills": [
-    "https://github.com/nebrass/hve-spielberg"
-  ]
-}
+```bash
+cp -r ~/.claude/skills/hve-spielberg ./my-project/.claude/skills/hve-spielberg
 ```
 
 ## Quick Start
