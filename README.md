@@ -3,7 +3,7 @@
 **AI-powered video production pipeline for Claude Code.** From design thinking to final render — 6 automated phases that turn your app into a polished promo or showcase video.
 
 ```
-/hve-spielberg ./my-project
+/hve-spielberg my-project
 ```
 
 ## What It Does
@@ -82,7 +82,7 @@ git clone https://github.com/nebrass/hve-spielberg.git ~/.claude/skills/hve-spie
 Copy the skill files directly into any project's `.claude/skills/` directory:
 
 ```bash
-cp -r ~/.claude/skills/hve-spielberg ./my-project/.claude/skills/hve-spielberg
+cp -r ~/.claude/skills/hve-spielberg my-project/.claude/skills/hve-spielberg
 ```
 
 ## Quick Start
@@ -95,7 +95,7 @@ cp -r ~/.claude/skills/hve-spielberg ./my-project/.claude/skills/hve-spielberg
 
 2. **Start the skill:**
    ```
-   /hve-spielberg ./my-video-project
+   /hve-spielberg my-video-project
    ```
 
 3. **Follow the prompts:**
@@ -116,9 +116,9 @@ cp -r ~/.claude/skills/hve-spielberg ./my-project/.claude/skills/hve-spielberg
 
 | Mode | Command | When |
 |------|---------|------|
-| `new` | `/hve-spielberg ./project` | Start a fresh video from scratch |
-| `continue` | `/hve-spielberg ./project --mode continue` | Resume where you left off |
-| `jump` | `/hve-spielberg ./project --mode jump --phase 3` | Jump to a specific phase |
+| `new` | `/hve-spielberg my-project` | Start a fresh video from scratch |
+| `continue` | `/hve-spielberg my-project --mode continue` | Resume where you left off |
+| `jump` | `/hve-spielberg my-project --mode jump --phase 3` | Jump to a specific phase |
 
 ## Voices
 
