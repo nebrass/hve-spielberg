@@ -15,7 +15,7 @@ hve-spielberg is a Claude Code skill that orchestrates end-to-end video producti
 3. **Captures your app** automatically via Chrome DevTools
 4. **Designs branded components** matching your app's visual identity
 5. **Produces the video** in Remotion (React-based motion graphics)
-6. **Adds voiceover + music** with ElevenLabs TTS, Whisper verification, and Pixabay music
+6. **Adds voiceover + music** with ElevenLabs TTS, Whisper verification, and Freesound music
 
 ### Dual Mode
 
@@ -36,7 +36,7 @@ Phase 0: DISCOVERY         Phase 1: STORYTELLING       Phase 2: CAPTURE
 Phase 3: DESIGN            Phase 4: PRODUCTION         Phase 5: AUDIO & RENDER
 ├ frontend-design skill    ├ Remotion scaffolding       ├ ElevenLabs TTS
 ├ Brand-matched components ├ remotion-best-practices    ├ Whisper verification
-├ Scene templates          ├ Screenshot integration     ├ Pixabay Music API
+├ Scene templates          ├ Screenshot integration     ├ Freesound Music API
 └ Visual design brief      └ Animation + transitions    └ Final render + export
 ```
 
@@ -50,8 +50,8 @@ Each phase has a user-approval checkpoint before proceeding to the next.
 | Python 3.10+ | Yes | [python.org](https://python.org) |
 | ffmpeg | Yes | `brew install ffmpeg` / `apt install ffmpeg` |
 | Chrome DevTools MCP | Yes | Configured in Claude Code settings |
-| `ELEVEN_LABS_API_KEY` | Yes | [elevenlabs.io](https://elevenlabs.io) — set as env var |
-| `PIXABAY_API_KEY` | No | [pixabay.com/api](https://pixabay.com/api/docs/) — enables music search |
+| `ELEVENLABS_API_KEY` | Yes | [elevenlabs.io](https://elevenlabs.io) — set as env var |
+| `FREESOUND_API_KEY` | No | [freesound.org/apiv2/apply](https://freesound.org/apiv2/apply/) — enables CC music search |
 | Whisper | Recommended | `pip install openai-whisper` — voiceover timing verification |
 
 ### Required Skills
@@ -89,8 +89,8 @@ cp -r ~/.claude/skills/hve-spielberg my-project/.claude/skills/hve-spielberg
 
 1. **Set your API key:**
    ```bash
-   export ELEVEN_LABS_API_KEY=your_key_here
-   export PIXABAY_API_KEY=your_key_here  # optional, for music search
+   export ELEVENLABS_API_KEY=your_key_here
+   export FREESOUND_API_KEY=your_key_here  # optional, for CC music search
    ```
 
 2. **Start the skill:**
@@ -133,7 +133,7 @@ cp -r ~/.claude/skills/hve-spielberg my-project/.claude/skills/hve-spielberg
 
 No bundled audio files. Three-tier approach:
 
-1. **Pixabay Music API** — Search free royalty-free music by mood keywords (requires `PIXABAY_API_KEY`)
+1. **Freesound API** — Search Creative Commons music by mood/genre, filter by duration and license, use the `preview-hq-mp3` URL directly (requires `FREESOUND_API_KEY`, free at [freesound.org/apiv2/apply](https://freesound.org/apiv2/apply/)). Attribute CC-BY tracks in `CREDITS.md`.
 2. **User-provided** — Bring your own MP3 or URL
 3. **No music** — Voiceover only
 
@@ -154,7 +154,7 @@ my-video-project/
 │   └── ...                   # Video composition from Phase 4
 ├── voiceover.mp3             # ElevenLabs TTS output
 ├── voiceover.srt             # Whisper transcription (subtitles)
-├── background-music.mp3      # Pixabay or user-provided
+├── background-music.mp3      # Freesound or user-provided
 └── out/
     └── final.mp4             # Final rendered video
 ```
@@ -196,12 +196,12 @@ A: 1920x1080 (Full HD), 30fps, MP4 with H.264 video and MP3 audio.
 **Q: Can I edit the video after generation?**
 A: Yes — the Remotion project is fully editable. Run `npx remotion studio` to open the visual editor, tweak scenes, then re-render.
 
-**Q: Is the Pixabay music free to use commercially?**
-A: Yes — Pixabay content is released under their [Content License](https://pixabay.com/service/license-summary/) which allows commercial use without attribution.
+**Q: Is Freesound music free to use commercially?**
+A: It depends on the track. Freesound hosts a mix of CC0 (public domain — no attribution, commercial OK), CC-BY (commercial OK with attribution), and other Creative Commons variants. The Phase 5 search filters to CC0 / CC-BY by default. For CC-BY tracks, the workflow writes a `CREDITS.md` automatically. Always check each track's license on its Freesound page before commercial use.
 
 ## Credits
 
-Fork of [promo-video](https://github.com/buildatscale-tv/claude-code-plugins/tree/main/plugins/promo-video) by buildatscale-tv, extended with design thinking, Chrome DevTools capture, frontend-design integration, and Pixabay music search.
+Fork of [promo-video](https://github.com/buildatscale-tv/claude-code-plugins/tree/main/plugins/promo-video) by buildatscale-tv, extended with design thinking, Chrome DevTools capture, frontend-design integration, and Freesound music search.
 
 ## License
 

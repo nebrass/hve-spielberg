@@ -4,7 +4,7 @@ description: >
   End-to-end video production pipeline with design thinking. 6-phase orchestrator:
   Discovery (design thinking + context) → Storytelling (narrative + storyboard) →
   Capture (Chrome DevTools screenshots) → Design (frontend-design components) →
-  Production (Remotion) → Audio &amp; Render (ElevenLabs + Whisper + Pixabay music).
+  Production (Remotion) → Audio &amp; Render (ElevenLabs + Whisper + Freesound music).
   Dual mode: promo (marketing) or showcase (portfolio/demo). Triggers: "create video",
   "promo video", "showcase video", "product video", "demo video", "launch video".
 user-invocable: true
@@ -29,8 +29,8 @@ Check required tools and skills:
 node --version        # ✓ 18+
 python3 --version     # ✓ 3.10+
 ffmpeg -version       # ✓ for audio/video processing
-echo "ELEVEN_LABS_API_KEY: $([ -n \"$ELEVEN_LABS_API_KEY\" ] && echo '✓ set' || echo '✗ — export ELEVEN_LABS_API_KEY=your_key')"
-echo "PIXABAY_API_KEY: $([ -n \"$PIXABAY_API_KEY\" ] && echo '✓ set (music search)' || echo '○ not set (music search disabled, user-provided only)')"
+echo "ELEVENLABS_API_KEY: $([ -n \"$ELEVENLABS_API_KEY\" ] && echo '✓ set' || echo '✗ — export ELEVENLABS_API_KEY=your_key')"
+echo "FREESOUND_API_KEY: $([ -n \"$FREESOUND_API_KEY\" ] && echo '✓ set (music search)' || echo '○ not set (music search disabled, user-provided only)')"
 ```
 
 ```bash
@@ -109,7 +109,7 @@ Phase 3: DESIGN ──── Phase 4: PRODUCTION ──── Phase 5: AUDIO &am
   │                    │                        │
   ├ frontend-design    ├ Remotion scaffolding   ├ ElevenLabs TTS
   ├ Brand extraction   ├ remotion-best-prac.    ├ Whisper verification
-  ├ Scene components   ├ Screenshot mockups     ├ Pixabay Music API
+  ├ Scene components   ├ Screenshot mockups     ├ Freesound Music API
   └ Visual brief       └ Animation/transitions  └ Final render + export
 ```
 

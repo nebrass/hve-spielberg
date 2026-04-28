@@ -7,7 +7,8 @@ Usage:
     python3 generate_voiceover.py
 
 Environment:
-    ELEVEN_LABS_API_KEY  — Required. ElevenLabs API key.
+    ELEVENLABS_API_KEY   — Required. ElevenLabs API key.
+                           (ELEVEN_LABS_API_KEY also accepted for back-compat.)
 
 Configuration (edit below):
     VOICE_ID         — ElevenLabs voice ID
@@ -31,9 +32,9 @@ except ImportError:
 
 # ─── Configuration ────────────────────────────────────────────────────────────
 
-API_KEY = os.environ.get("ELEVEN_LABS_API_KEY")
+API_KEY = os.environ.get("ELEVENLABS_API_KEY") or os.environ.get("ELEVEN_LABS_API_KEY")
 if not API_KEY:
-    print("Error: ELEVEN_LABS_API_KEY not set")
+    print("Error: ELEVENLABS_API_KEY not set")
     sys.exit(1)
 
 # Voice IDs:

@@ -55,28 +55,50 @@ Compare Whisper timestamps against scene timings. If ANY overlap detected:
 
 ## Step 5.2: Background Music
 
-### Pixabay Music API (if PIXABAY_API_KEY set)
+### Freesound API (if FREESOUND_API_KEY set)
 
-Derive mood keywords from the storytelling phase (e.g., "corporate upbeat ambient"):
+Freesound provides a real, public CC-licensed audio search API. Get a key at <https://freesound.org/apiv2/apply>. Authentication uses a `token` query parameter; previews require no OAuth2.
+
+Derive mood/genre keywords from the storytelling phase (e.g., "cinematic corporate uplifting loop"). Filter by `duration` so you don't pick a 10-minute ambient drone for a 45s spot, and by `license` so you stay on safe ground (CC0 or CC-BY).
 
 ```bash
-curl -s "https://pixabay.com/api/music/?key=${PIXABAY_API_KEY}&q=corporate+upbeat&category=background&per_page=5" | python3 -c "
+QUERY="cinematic corporate uplifting"
+DURATION_S=42  # match your video duration
+
+curl -sG "https://freesound.org/apiv2/search/text/" \
+  --data-urlencode "query=${QUERY}" \
+  --data-urlencode "filter=duration:[${DURATION_S} TO 180] license:(\"Creative Commons 0\" OR \"Attribution\")" \
+  --data-urlencode "fields=id,name,duration,license,username,previews,url" \
+  --data-urlencode "page_size=10" \
+  --data-urlencode "token=${FREESOUND_API_KEY}" \
+| python3 -c "
 import json, sys
 data = json.load(sys.stdin)
-for hit in data.get('hits', []):
-    print(f\"  {hit['id']}: {hit['title']} ({hit['duration']}s) — {hit['url']}\")
-    print(f\"    Download: {hit['audio']}\")
+for r in data.get('results', []):
+    print(f\"  [{r['id']}] {r['name']} ({r['duration']:.1f}s) — {r['license']} by {r['username']}\")
+    print(f\"      page:    {r['url']}\")
+    print(f\"      preview: {r['previews']['preview-hq-mp3']}\")
 "
 ```
 
-Present options to user, download selected track:
+Present results to the user. Each hit has a high-quality .mp3 preview URL (`previews.preview-hq-mp3`) usable directly as a soundtrack. Download the chosen track:
+
 ```bash
-curl -sL "<selected-audio-url>" -o background-music.mp3
+curl -sL "<selected-preview-hq-mp3-url>" -o background-music.mp3
 ```
+
+**Attribution:** If the chosen track is CC-BY (not CC0), you must credit the author. Write `CREDITS.md` in the project root:
+
+```
+Background music: "<track name>" by <username> (Freesound, <license>)
+URL: <track page URL>
+```
+
+Full-quality original downloads require OAuth2; previews are sufficient for video soundtracks.
 
 ### User-Provided (fallback)
 
-If no PIXABAY_API_KEY or user prefers own music:
+If no FREESOUND_API_KEY or user prefers own music:
 
 ```json
 {
@@ -100,11 +122,30 @@ ffmpeg -y -i voiceover.mp3 -af "loudnorm=I=-16:TP=-1.5:LRA=11" voiceover-normali
 ```
 
 ### Mix music (if using background music)
+
 ```bash
-# Adjust st= in afade to (duration - 3) for fade out
+# DURATION = video length in seconds; FADE_OUT_START = DURATION - 3
+DURATION=42
+FADE_OUT_START=39
+
 ffmpeg -y -i voiceover-normalized.mp3 -i background-music.mp3 \
-  -filter_complex "[1:a]volume=0.10,afade=t=in:st=0:d=2,afade=t=out:st=${FADE_OUT_START}:d=3[music];[0:a][music]amix=inputs=2:duration=first" \
+  -filter_complex "
+    [1:a]atrim=0:${DURATION},
+         volume=0.22,
+         afade=t=in:st=0:d=2,
+         afade=t=out:st=${FADE_OUT_START}:d=3[music];
+    [0:a][music]amix=inputs=2:duration=first:dropout_transition=0:normalize=0,
+                alimiter=limit=0.95[out]" \
+  -map "[out]" -c:a libmp3lame -q:a 2 \
   voiceover-with-music.mp3
+```
+
+**Critical:** `amix` defaults to `normalize=1`, which divides each input by the number of inputs (a hidden -6dB on every track). With music already attenuated to 0.22, that double-cut leaves music near-inaudible. Always pass `normalize=0` and rely on `alimiter` for peak control.
+
+Validate with `ebur128`: integrated loudness should land around -16 LUFS, true peak under -0.5 dBFS.
+
+```bash
+ffmpeg -hide_banner -i voiceover-with-music.mp3 -af ebur128=peak=true -f null - 2>&1 | tail -16
 ```
 
 ## Step 5.4: Final Render
