@@ -25,12 +25,102 @@ Build the narrative structure and visual plan. Reads `context.md` from Phase 0.
         { "label": "Dark mode", "description": "Modern, bold, dramatic" }
       ],
       "multiSelect": false
+    },
+    {
+      "question": "What aspect ratio and canvas size?",
+      "header": "Aspect",
+      "options": [
+        { "label": "16:9 — 1920×1080", "description": "Standard horizontal (YouTube, web, embeds) — Recommended for promos" },
+        { "label": "9:16 — 1080×1920", "description": "Vertical for TikTok / Reels / Shorts" },
+        { "label": "1:1 — 1080×1080", "description": "Square for Instagram feed / LinkedIn carousels" },
+        { "label": "4:5 — 1080×1350", "description": "Portrait for Instagram feed (taller than 1:1)" }
+      ],
+      "multiSelect": false
     }
   ]
 }
 ```
 
-## Step 1.2: Voice Selection
+Record the choice in `project-plan.md`. Phase 3 scene templates and the Phase 4 root composition will use these dimensions for their `data-width` / `data-height`. Once chosen, the canvas size is locked — scene templates won't reflow gracefully across aspect ratios.
+
+## Step 1.2: Visual Identity (3 strategies)
+
+Three ways to lock in the visual identity. Pick the most specific one that fits — each is faster than the next.
+
+```json
+{
+  "questions": [{
+    "question": "How should the visual identity be set?",
+    "header": "Identity",
+    "options": [
+      { "label": "Use a curated design system (fastest)", "description": "Pick a known brand: Stripe, Linear, Apple, Notion, Vercel, Airbnb, GitHub, Cal, Arc, Bento. Skips brand extraction entirely; Phase 3 copies design-systems/<name>/DESIGN.md straight into the project. Best when the user says 'make it look like X'." },
+      { "label": "Pick a HyperFrames named style (medium)", "description": "Pick from 8 styles: Swiss Pulse, Velvet Standard, Deconstructed, Maximalist Type, Data Drift, Soft Signal, Folk Frequency, Shadow Cut. Phase 3 seeds the project's DESIGN.md from the named style; still allows minor screenshot-based tuning." },
+      { "label": "Derive from screenshots (default)", "description": "Phase 3 extracts colors, typography, and shape language from the captured app screenshots. Best when the user wants an identity that matches their actual product." }
+    ],
+    "multiSelect": false
+  }]
+}
+```
+
+### If "curated design system" was picked
+
+Ask which one:
+
+```json
+{
+  "questions": [{
+    "question": "Which design system?",
+    "header": "System",
+    "options": [
+      { "label": "Stripe", "description": "Premium fintech — sohne-var weight 300, blue-tinted shadows, deep navy. Payments / fintech / dev tools." },
+      { "label": "Linear", "description": "Engineered minimalism — Inter, restrained accent, glass surfaces. Issue trackers, SaaS, productivity." },
+      { "label": "Apple", "description": "Quiet authority — SF Pro, generous whitespace, neutral palette. Hardware, consumer launches." },
+      { "label": "Notion", "description": "Editorial-software — soft warmth, hand-drawn touches, calm hierarchy. Productivity, docs, content tools." },
+      { "label": "Vercel", "description": "Sharp black-on-white minimalism — Geist, dramatic monochrome. Dev infra, deploy platforms." },
+      { "label": "Airbnb", "description": "Warm rounded — Cereal, generous radii, soft shadows. Travel, hospitality, consumer marketplaces." },
+      { "label": "GitHub", "description": "Functional dark mode — high-contrast neutrals, monospace anchors. Code platforms, dev tools." },
+      { "label": "Cal.com", "description": "Friendly OSS clarity — minimal palette, approachable type. Scheduling, OSS tools." },
+      { "label": "Arc", "description": "Playful chrome — gradients, vivid colour. Browsers, consumer SaaS." },
+      { "label": "Bento", "description": "Playful link-in-bio — bold colour blocks. Social, creator tools." }
+    ],
+    "multiSelect": false
+  }]
+}
+```
+
+Record `design_system: <slug>` in `project-plan.md` (slugs: `stripe`, `linear-app`, `apple`, `notion`, `vercel`, `airbnb`, `github`, `cal`, `arc`, `bento`). Phase 3 will copy `design-systems/<slug>/DESIGN.md` to the project root as `DESIGN.md`. See `design-systems/README.md` for catalog details and how to add more.
+
+### If "HyperFrames named style" was picked
+
+Ask which one:
+
+```json
+{
+  "questions": [{
+    "question": "Which HyperFrames named style?",
+    "header": "Style",
+    "options": [
+      { "label": "Swiss Pulse", "description": "Clinical, precise — SaaS, dev tools, dashboards. Black + white + one accent. Helvetica/Inter. Cinematic Zoom transitions." },
+      { "label": "Velvet Standard", "description": "Premium, timeless — luxury, enterprise, keynotes. Cross-Warp Morph transitions." },
+      { "label": "Deconstructed", "description": "Industrial, raw — tech launches, security, punk. Glitch / Whip-Pan transitions." },
+      { "label": "Maximalist Type", "description": "Loud, kinetic — big announcements, launches. Ridged Burn transitions." },
+      { "label": "Data Drift", "description": "Futuristic, immersive — AI, ML, cutting-edge tech. Gravitational Lens / Domain Warp." },
+      { "label": "Soft Signal", "description": "Intimate, warm — wellness, personal stories, brand. Thermal Distortion." },
+      { "label": "Folk Frequency", "description": "Cultural, vivid — consumer apps, food, communities. Swirl Vortex / Ripple Waves." },
+      { "label": "Shadow Cut", "description": "Dark, cinematic — dramatic reveals, security, exposé. Domain Warp." }
+    ],
+    "multiSelect": false
+  }]
+}
+```
+
+Record `style: <name>` in `project-plan.md`. Full descriptions live in the `hyperframes` skill at `visual-styles.md` (palette, fonts, motion feel, primary shader transition). For palette pairing see `hyperframes/palettes/*.md`.
+
+### If "derive from screenshots" was picked
+
+No follow-up. Phase 3 will run the full extraction workflow.
+
+## Step 1.3: Voice Selection
 
 ```json
 {
@@ -48,7 +138,7 @@ Build the narrative structure and visual plan. Reads `context.md` from Phase 0.
 }
 ```
 
-## Step 1.3: Narrative Structure
+## Step 1.4: Narrative Structure
 
 Based on mode:
 
@@ -72,7 +162,7 @@ Scene 4: CLOSER (50-60s)    — Key takeaway + links/contact
 
 Adjust durations based on selected total length.
 
-## Step 1.4: Transition Selection
+## Step 1.5: Transition Selection
 
 ```json
 {
@@ -104,7 +194,7 @@ Adjust durations based on selected total length.
 
 **If "Metallic swoosh" selected:** Read [../patterns/metallic-swoosh.md](../patterns/metallic-swoosh.md) before implementing. Uses crossfade + shine overlay — do NOT use clipPath.
 
-## Step 1.5: Build Storyboard
+## Step 1.6: Build Storyboard
 
 For each scene, define:
 - **Timecode** — start/end in seconds
@@ -115,12 +205,12 @@ For each scene, define:
 
 Generate `storyboard.md` from `templates/storyboard.md`.
 
-## Step 1.6: Which App Views to Capture
+## Step 1.7: Which App Views to Capture
 
 Based on the storyboard, list the specific app URLs/routes/views that need to be captured in Phase 2. For each scene that shows the app, define:
 - URL or route to navigate to
 - Specific element/state to capture (e.g., "dashboard with sample data", "modal open")
-- Device viewport (desktop 1920x1080 or mobile 390x844)
+- Device viewport — match the chosen canvas: desktop 1920×1080 for 16:9; mobile 390×844 for 9:16; square viewport 1080×1080 for 1:1; mobile 390×488 (or desktop crop) for 4:5
 
 ## Checkpoint
 

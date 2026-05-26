@@ -3,8 +3,8 @@ name: hve-spielberg
 description: >
   End-to-end video production pipeline with design thinking. 6-phase orchestrator:
   Discovery (design thinking + context) → Storytelling (narrative + storyboard) →
-  Capture (Chrome DevTools screenshots) → Design (frontend-design components) →
-  Production (Remotion) → Audio &amp; Render (ElevenLabs + Whisper + Freesound music).
+  Capture (Chrome DevTools screenshots) → Design (HyperFrames scene templates) →
+  Production (HyperFrames composition) → Audio &amp; Render (ElevenLabs + Whisper + Freesound music).
   Dual mode: promo (marketing) or showcase (portfolio/demo). Triggers: "create video",
   "promo video", "showcase video", "product video", "demo video", "launch video".
 user-invocable: true
@@ -29,12 +29,14 @@ Check required tools and skills:
 node --version        # ✓ 18+
 python3 --version     # ✓ 3.10+
 ffmpeg -version       # ✓ for audio/video processing
-echo "ELEVENLABS_API_KEY: $([ -n \"$ELEVENLABS_API_KEY\" ] && echo '✓ set' || echo '✗ — export ELEVENLABS_API_KEY=your_key')"
+echo "ELEVENLABS_API_KEY: $([ -n \"$ELEVENLABS_API_KEY\" ] && echo '✓ set (high-quality TTS)' || echo '○ not set — Phase 5 will fall back to npx hyperframes tts (Kokoro-82M, local, lower quality)')"
 echo "FREESOUND_API_KEY: $([ -n \"$FREESOUND_API_KEY\" ] && echo '✓ set (music search)' || echo '○ not set (music search disabled, user-provided only)')"
 ```
 
 ```bash
-ls ~/.claude/skills/remotion-best-practices/SKILL.md 2>/dev/null && echo "remotion-best-practices: ✓" || echo "remotion-best-practices: ✗ — npx skills add remotion-dev/skills"
+ls ~/.claude/skills/hyperframes/SKILL.md 2>/dev/null && echo "hyperframes skill: ✓" || echo "hyperframes skill: ✗ — install the Claude Code skill (authoring prompts)"
+ls ~/.claude/skills/gsap/SKILL.md 2>/dev/null && echo "gsap skill: ✓"        || echo "gsap skill: ○ — recommended companion to hyperframes for animation choreography"
+npx --yes hyperframes --version 2>/dev/null && echo "hyperframes CLI: ✓" || echo "hyperframes CLI: ✗ — npm i -g hyperframes  (or rely on npx; package: hyperframes on npm, repo github.com/heygen-com/hyperframes)"
 ```
 
 Whisper is recommended but optional:
@@ -78,8 +80,9 @@ If no project-plan.md → switch to "new" mode
 If context.md missing → Phase 0
 If storyboard.md missing → Phase 1
 If no public/screenshots/ → Phase 2
-If no src/ components → Phase 3-4
-If no out/video.mp4 → Phase 4-5
+If no DESIGN.md or scenes/ → Phase 3
+If no index.html → Phase 4
+If no out/final.mp4 → Phase 5
 ```
 
 ### `jump`
@@ -88,9 +91,9 @@ Go directly to a specific phase. Verify prerequisites:
 ```
 Phase 1 requires: context.md
 Phase 2 requires: context.md + storyboard.md
-Phase 3 requires: public/screenshots/
-Phase 4 requires: context.md + storyboard.md + src/ components
-Phase 5 requires: out/ video render
+Phase 3 requires: public/screenshots/ (unless skipped, e.g. no real product)
+Phase 4 requires: context.md + storyboard.md + DESIGN.md + scenes/*.html
+Phase 5 requires: index.html (root composition)
 ```
 
 ---
@@ -107,10 +110,10 @@ Phase 0: DISCOVERY ──── Phase 1: STORYTELLING ──── Phase 2: CAPT
 
 Phase 3: DESIGN ──── Phase 4: PRODUCTION ──── Phase 5: AUDIO &amp; RENDER
   │                    │                        │
-  ├ frontend-design    ├ Remotion scaffolding   ├ ElevenLabs TTS
-  ├ Brand extraction   ├ remotion-best-prac.    ├ Whisper verification
-  ├ Scene components   ├ Screenshot mockups     ├ Freesound Music API
-  └ Visual brief       └ Animation/transitions  └ Final render + export
+  ├ hyperframes skill  ├ HyperFrames root html  ├ ElevenLabs TTS
+  ├ DESIGN.md          ├ Sub-comp wiring        ├ Whisper verification
+  ├ Scene templates    ├ Transitions (GSAP)     ├ Freesound Music API
+  └ Brand & motion     └ lint/inspect/validate  └ npx hyperframes render
 ```
 
 ### Phase 0: Discovery
@@ -149,7 +152,11 @@ See [workflows/phase-5-audio.md](workflows/phase-5-audio.md)
 - **No jitter effects** — No shaking, vibrating, or jittery motion
 - **No full scene spinning** — No 360° rotations; subtle 3D tilt on mockups is fine
 - **No 3D transforms in transitions** — Stick to 2D (opacity, position, scale, gradient masks)
-- **No clipPath transitions** — They cause black sliver artifacts; use crossfade + shine overlay
+- **No clipPath transitions** — Anti-aliased black slivers between scenes; use crossfade + shine overlay (see `patterns/metallic-swoosh.md`)
+- **No exit animations except on the closing scene** — Inter-scene transitions own the exit; double-motion looks busy
+- **Never animate `display`, `visibility`, or call `.play()` in timelines** — Breaks HyperFrames' deterministic seek; use `opacity` + `pointer-events`
+- **Never animate `<img>` dimensions directly** — Causes layout recompute that confuses deterministic seek. Wrap each `<img>` in a non-timed `<div>` and animate the wrapper's `transform` (`scale`, `translate`) instead
+- **Never use `tl.from()` for opacity tweens with stagger** — GSAP records the END state at registration; if CSS rest is `opacity:0` the recorded end is `opacity:0` and the animation goes nowhere. With stagger, later instances re-hide elements that earlier instances revealed. **Always use `tl.fromTo(target, {opacity:0,...}, {opacity:1,...}, pos)`.** See `patterns/visual-patterns.md` § "tl.from() stagger trap"
 
 ---
 

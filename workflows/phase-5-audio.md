@@ -26,7 +26,36 @@ For each scene, write voiceover text that:
 - Ends 0.5s before scene end (buffer)
 - Matches the spoken stat to the visual stat
 
-### Generate with ElevenLabs
+#### Pronouncing acronyms and brand abbreviations
+
+ElevenLabs voices (and most current TTS models) run space-separated capital letters together as a phonetic blob, not as spelled letters. Writing "H V E" in a script can render as "Sage V E" or similar — the model treats it as a single syllable.
+
+**Always write acronyms phonetically** when you want them spelled out:
+
+| Want spoken | Write in script |
+|---|---|
+| H V E spielberg | `Aitch Vee Ee Spielberg` |
+| AI | `A I` *(spelled)* or `aye eye` *(emphasized)* |
+| API | `A P I` *(spelled)* or `ay pee eye` *(emphasized)* |
+| SaaS | `sass` *(natural word)* or `S A A S` *(spelled)* |
+| URL | `U R L` *(spelled)* or `earl` *(natural)* |
+
+Periods between letters (`H. V. E.`) work in some TTS but cause sentence-end pauses in others — phonetic spelling is the most reliable. Test the section once and inspect the output before generating the rest.
+
+#### Voice timing is non-linear with word count
+
+Word count is a weak proxy for spoken duration. Comma density matters more — Matilda (and most TTS voices) take ~0.3–0.5s of pause at each comma. A 22-word sentence with 5 commas can run 15 seconds; the same idea in 26 commaless words takes 10 seconds.
+
+When a section overruns budget, **drop commas before dropping words**. Restructure with fewer subclauses and more direct phrasing. Same information, half the commas, same content density:
+
+```
+❌ Longer — "Discover the product, using design thinking. Write the narrative, scene by scene. Capture the live app via Chrome DevTools."
+✅ Shorter — "Discover with design thinking. Storyboard the narrative. Capture via Chrome DevTools."
+```
+
+Each comma you remove saves ~0.3–0.5s. A 5-comma rewrite can reclaim 2+ seconds without cutting meaning.
+
+### Generate with ElevenLabs (default, higher quality)
 
 Edit `scripts/generate_voiceover.py`:
 - Set `VOICE_ID` to selected voice from Phase 1
@@ -37,21 +66,69 @@ Edit `scripts/generate_voiceover.py`:
 python3 ${SKILL_DIR}/scripts/generate_voiceover.py
 ```
 
-### Verify with Whisper (CRITICAL — do not skip!)
+### Alternative: HyperFrames-native TTS (no API key, local)
+
+If `ELEVENLABS_API_KEY` is unset, HyperFrames ships a local TTS via Kokoro-82M (no API key, no rate limits, ~54 voices across 8 languages). Quality is good but noticeably below ElevenLabs Multilingual v2 — prefer ElevenLabs when you can.
+
+```bash
+# Single-line narration
+npx hyperframes tts "Your script line here." --voice af_nova --output voiceover.mp3
+
+# From a file
+npx hyperframes tts script.txt --voice af_heart --output voiceover.mp3
+
+# List all 54 voices (8 languages)
+npx hyperframes tts --list
+```
+
+Voice naming convention: `<lang><gender>_<name>` (e.g. `af_nova` = American female "Nova", `bm_george` = British male "George"). For non-English narration, install `espeak-ng` system-wide (`brew install espeak-ng` / `apt-get install espeak-ng`).
+
+Whisper verification (next step) is renderer-agnostic and works identically for either TTS path.
+
+### Verify timing (CRITICAL — do not skip!)
+
+Prefer `hyperframes transcribe` (bundled with HyperFrames, no separate install):
+
+```bash
+npx hyperframes transcribe voiceover.mp3 --model tiny
+cat transcript.json | python3 -m json.tool | head -30
+```
+
+Falls back to standalone `whisper`:
 
 ```bash
 whisper voiceover.mp3 --model tiny --output_format srt
 cat voiceover.srt
 ```
 
-Compare Whisper timestamps against scene timings. If ANY overlap detected:
+**Whisper tiny-model timestamps drift ±0.5s** because the model extends word boundaries into trailing silence. For precise per-section gap analysis, use `ffmpeg silencedetect` instead — it's exact:
 
-1. **Shorten text** — make it punchier, cut filler words
-2. **Increase gaps** — push next section's start time 1-2s later
-3. **Add pauses** — insert "..." in text
-4. **Regenerate and verify again**
+```bash
+ffmpeg -i voiceover.mp3 -af "silencedetect=noise=-40dB:d=0.3" -f null - 2>&1 | grep silence
+```
+
+Output gives precise `silence_start` / `silence_end` timestamps for every gap ≥0.3s of silence below -40dB. Compare these against your section timings to verify each section ends within its scene's window.
+
+Compare timestamps against scene timings. If ANY overlap detected:
+
+1. **Drop commas before dropping words** — comma pauses inflate duration significantly (see "Voice timing is non-linear" above)
+2. **Shorten text** — make it punchier, cut filler words
+3. **Increase gaps** — push next section's start time 1-2s later
+4. **Add pauses** — insert "..." in text
+5. **Regenerate and verify again**
 
 **Repeat until ZERO overlaps. Do NOT ask the user — just fix it.**
+
+### Pad voiceover to VIDEO_DURATION
+
+The voiceover audio must match the composition's total duration exactly. If it's shorter, HyperFrames render finds no audio for trailing frames and may truncate. Pad with `apad`:
+
+```bash
+ffmpeg -y -i voiceover.mp3 -af "apad=whole_dur=60" -c:a libmp3lame -q:a 2 voiceover-padded.mp3
+mv voiceover-padded.mp3 voiceover.mp3
+```
+
+(`scripts/generate_voiceover.py` does this automatically using `VIDEO_DURATION`.)
 
 ## Step 5.2: Background Music
 
@@ -142,6 +219,22 @@ ffmpeg -y -i voiceover-normalized.mp3 -i background-music.mp3 \
 
 **Critical:** `amix` defaults to `normalize=1`, which divides each input by the number of inputs (a hidden -6dB on every track). With music already attenuated to 0.22, that double-cut leaves music near-inaudible. Always pass `normalize=0` and rely on `alimiter` for peak control.
 
+### No-music path (voiceover only)
+
+If the user chose "No music" in Step 5.2, **you still need to produce `voiceover-with-music.mp3`** — the root composition's `<audio>` element references that filename. Without it, the rendered video has no audio.
+
+Two equivalent options. Pick whichever is more readable in your project:
+
+```bash
+# Option A: re-encode the normalized voiceover to the canonical output name
+ffmpeg -y -i voiceover-normalized.mp3 -c:a libmp3lame -q:a 2 voiceover-with-music.mp3
+
+# Option B: hard-link / copy (faster, identical content)
+cp voiceover-normalized.mp3 voiceover-with-music.mp3
+```
+
+Then proceed to Step 5.4 — the render step doesn't care whether music was mixed in or not, as long as `voiceover-with-music.mp3` exists and is the full composition duration.
+
 Validate with `ebur128`: integrated loudness should land around -16 LUFS, true peak under -0.5 dBFS.
 
 ```bash
@@ -150,15 +243,34 @@ ffmpeg -hide_banner -i voiceover-with-music.mp3 -af ebur128=peak=true -f null - 
 
 ## Step 5.4: Final Render
 
-### Render video (high quality)
+The HyperFrames composition (`index.html`) already references `voiceover-with-music.mp3` via an `<audio>` clip on track 0 (see Phase 4). A single render command produces the final MP4 with embedded audio — no separate mux step.
+
+### Pre-flight gates
+
+Re-run the validation gates after wiring the audio clip, in case any caption sub-composition overlaps a visual element:
+
 ```bash
-npx remotion render MainComposition out/video-hq.mp4 --image-format png --crf 1
+npx hyperframes lint
+npx hyperframes inspect
+npx hyperframes validate
 ```
 
-### Combine video + audio
+### Render
+
 ```bash
-ffmpeg -y -i out/video-hq.mp4 -i voiceover-with-music.mp3 \
-  -c:v copy -map 0:v:0 -map 1:a:0 \
+npx hyperframes render --output out/final.mp4
+```
+
+HyperFrames renders via headless Chromium and muxes audio in the same pass. Output is an MP4 (H.264 + AAC) at the canvas size chosen in Phase 1 (1920×1080 / 1080×1920 / 1080×1080 / 1080×1350).
+
+### If you need a silent video first (rarely)
+
+Render without the audio clip wired up, then mux separately with ffmpeg:
+
+```bash
+npx hyperframes render --output out/video-silent.mp4
+ffmpeg -y -i out/video-silent.mp4 -i voiceover-with-music.mp3 \
+  -c:v copy -c:a aac -map 0:v:0 -map 1:a:0 -shortest \
   out/final.mp4
 ```
 
@@ -167,16 +279,37 @@ ffmpeg -y -i out/video-hq.mp4 -i voiceover-with-music.mp3 \
 ffprobe out/final.mp4 2>&1 | grep -E "Duration|Video|Audio"
 ```
 
+### Troubleshooting render failures
+
+If `npx hyperframes render` hangs, errors, or produces an unexpected output, **always run `npx hyperframes doctor` first**:
+
+```bash
+npx hyperframes doctor
+```
+
+`doctor` checks Node version, FFmpeg, Chromium binary, and reports which capture path will be used. It prints actionable fix instructions for anything broken.
+
+Known issues:
+
+- **`HeadlessExperimental.beginFrame' wasn't found`** — Chromium 147+ removed this protocol. The HyperFrames CLI from v0.4.2 onwards auto-detects and falls back to screenshot mode. If you're on a pinned older CLI, set the escape hatch: `export PRODUCER_FORCE_SCREENSHOT=true` before render.
+- **Render hangs ~120 seconds then times out** — HyperFrames is trying to use system Chrome instead of `chrome-headless-shell`. Fix:
+  ```bash
+  npx puppeteer browsers install chrome-headless-shell
+  ```
+  Re-run `npx hyperframes doctor` to confirm the chrome-headless-shell binary is now detected. This is the same binary the `setup.sh` step in README's prerequisites should have installed.
+- **Render succeeds but output is silent** — verify the `<audio>` element in `index.html` has an `id` attribute (HyperFrames `lint` requires this — without an `id`, the audio is silently dropped during render).
+- **Some scenes look blank during transitions** — adjacent scenes need to OVERLAP during the crossfade window. See `patterns/transition-catalog.md` § Hard Rules.
+
 ## Output
 
 - `out/final.mp4` — Final video with voiceover and music
 - `voiceover.mp3` — Raw voiceover
-- `voiceover.srt` — Whisper transcription (for subtitles)
+- `transcript.json` — Word-level timing from `npx hyperframes transcribe` (default), OR `voiceover.srt` if you used the standalone-whisper fallback
 
 ## Checkpoint
 
 > "Video rendered! Final deliverable: `out/final.mp4`
 >
-> Duration: [X]s | Resolution: 1920x1080 | Audio: voiceover + music
+> Duration: [X]s | Resolution: [W]×[H] ([aspect]) | Audio: voiceover + music
 >
 > Watch it and let me know if you'd like any adjustments."

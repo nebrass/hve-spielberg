@@ -1,81 +1,94 @@
 # Metallic Swoosh Transition
 
-A premium diagonal shine transition for section changes. Uses crossfade + gradient shine overlay.
+A premium diagonal shine for section changes. Implemented as a crossfade between two adjacent scenes with a moving gradient overlay synchronized to the fade. The transition is **authored inline in the root composition's timeline**, not as a separate sub-composition — it straddles two scene clips, so it cannot live inside either one.
 
-**WARNING:** Do NOT use `clipPath` for transitions — it causes black sliver artifacts between scenes.
+**Why not `clipPath`:** Polygon `clipPath` transitions leave an anti-aliased 1px black sliver between the exiting and entering scenes because the two half-planes never share an exact subpixel boundary. The crossfade + shine approach has no seam.
 
-## Implementation
+## Anatomy
 
-```tsx
-import { TransitionPresentation } from '@remotion/transitions';
-import { AbsoluteFill, interpolate } from 'remotion';
+Three things happen during the swoosh window:
 
-export const metallicSwoosh = (): TransitionPresentation => {
-  return {
-    entering: ({ progress }) => {
-      const opacity = interpolate(progress, [0, 0.5, 1], [0, 0.8, 1]);
-      return (
-        <AbsoluteFill style={{ opacity }}>
-          <AbsoluteFill>
-            {/* Content */}
-            <AbsoluteFill style={{ opacity }}>
-              {'<children/>'}
-            </AbsoluteFill>
-          </AbsoluteFill>
-        </AbsoluteFill>
-      );
-    },
-    exiting: ({ progress }) => {
-      const opacity = interpolate(progress, [0, 0.5, 1], [1, 0.3, 0]);
-      const shinePosition = interpolate(progress, [0, 1], [-200, 120]);
+1. **Outgoing scene clip** fades `opacity: 1 → 0`.
+2. **Incoming scene clip** fades `opacity: 0 → 1` over the same window.
+3. **Shine overlay** — a thin, hot diagonal band whose `background-position` sweeps across the frame during the same window.
 
-      return (
-        <AbsoluteFill>
-          {/* Outgoing content fades */}
-          <AbsoluteFill style={{ opacity }}>
-            {'<children/>'}
-          </AbsoluteFill>
-          {/* Metallic shine sweeps across */}
-          <AbsoluteFill
-            style={{
-              background: `linear-gradient(
-                135deg,
-                transparent ${shinePosition - 20}%,
-                rgba(255,255,255,0.4) ${shinePosition - 5}%,
-                rgba(255,255,255,0.8) ${shinePosition}%,
-                rgba(255,255,255,0.4) ${shinePosition + 5}%,
-                transparent ${shinePosition + 20}%
-              )`,
-              pointerEvents: 'none',
-            }}
-          />
-        </AbsoluteFill>
-      );
-    },
-  };
-};
+## Implementation (inline in the root `index.html`)
+
+In Phase 4, the root composition wires inter-scene transitions in its own timeline. Drop the overlay element next to your scene clips and add the swoosh tweens to the root timeline:
+
+```html
+<!-- Two adjacent scene clips in the root composition. Both start invisible if
+     they're not the first scene; the swoosh tweens them in/out. -->
+<div data-composition-id="scene-01"
+     data-composition-src="scenes/01.html"
+     data-start="0"  data-duration="5.4" data-track-index="1"
+     style="opacity:1"></div>
+
+<div data-composition-id="scene-02"
+     data-composition-src="scenes/02.html"
+     data-start="5"  data-duration="5"   data-track-index="1"
+     style="opacity:0"></div>
+
+<!-- Shine overlay. Painting order is controlled by CSS z-index (see <style> below);
+     data-track-index="9" only keeps it on a separate track so it can overlap the
+     scene clips without tripping HyperFrames' same-track overlap check. -->
+<div id="swoosh-01-02"
+     data-start="5" data-duration="0.4" data-track-index="9"
+     aria-hidden="true"
+     style="opacity:0;"></div>
+
+<style>
+  #swoosh-01-02 {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    pointer-events: none;
+    background: linear-gradient(
+      115deg,
+      transparent 35%,
+      rgba(255,255,255,0.35) 47%,
+      rgba(255,255,255,0.85) 50%,
+      rgba(255,255,255,0.35) 53%,
+      transparent 65%
+    );
+    background-size: 250% 100%;
+    background-position: -75% 0;
+    mix-blend-mode: screen;
+  }
+</style>
+
+<script>
+  // Add these tweens to the ROOT composition's timeline. Times below are
+  // absolute (in seconds) on the root timeline — the swoosh fires at t=5s.
+  // window.__timelines["main"] is registered in index.html (see Phase 4).
+  const root = window.__timelines["main"];
+
+  // Crossfade: 0.4s, centered on t=5s.
+  root.to('[data-composition-id="scene-01"]', { opacity: 0, duration: 0.4, ease: "power2.inOut" }, 5);
+  root.to('[data-composition-id="scene-02"]', { opacity: 1, duration: 0.4, ease: "power2.inOut" }, 5);
+
+  // Shine: pop in, sweep across, fade out — all inside the 0.4s window.
+  root.to("#swoosh-01-02", { opacity: 1, duration: 0.08, ease: "power1.out" }, 5);
+  root.to("#swoosh-01-02", { backgroundPosition: "175% 0", duration: 0.4, ease: "power2.inOut" }, 5);
+  root.to("#swoosh-01-02", { opacity: 0, duration: 0.08, ease: "power1.in" }, 5.32);
+</script>
 ```
 
-## Usage
+## Tuning Knobs
 
-```tsx
-import { TransitionSeries } from '@remotion/transitions';
-import { metallicSwoosh } from './MetallicSwoosh';
+- **Band thickness** — widen the `transparent ... transparent` stops (e.g. 30% / 70%) for a softer, more cinematic sweep.
+- **Sweep angle** — `115deg` reads as left-to-right with a slight downward tilt. Use `65deg` to reverse direction for "going back" beats.
+- **Hot-spot intensity** — push the centre stop to `rgba(255,255,255,1.0)` for a brighter pop on dark backgrounds; pull it to `0.6` on light scenes.
+- **Crossfade vs shine timing** — keep the shine peak (`background-position` at 50%) aligned with the midpoint of the crossfade so the bright moment lines up with the visual hand-off.
 
-<TransitionSeries>
-  <TransitionSeries.Sequence durationInFrames={150}>
-    <Scene1 />
-  </TransitionSeries.Sequence>
-  <TransitionSeries.Transition
-    presentation={metallicSwoosh()}
-    timing={{ type: 'linear', durationInFrames: 20 }}
-  />
-  <TransitionSeries.Sequence durationInFrames={150}>
-    <Scene2 />
-  </TransitionSeries.Sequence>
-</TransitionSeries>
-```
+## Where Not to Use It
 
-## Why Not clipPath?
+- Dialog-driven beats — the swoosh implies "we're moving forward". Don't fire it mid-sentence.
+- Back-to-back swooshes — readers stop noticing after the second; rotate with a quiet crossfade for breathing room.
+- Final fade-to-black — the closing scene should exit passively (no shine).
 
-`clipPath` polygon transitions cause a 1px black sliver between exiting and entering scenes due to anti-aliasing. The crossfade + shine approach eliminates this artifact entirely while providing a more premium metallic feel.
+## Validation
+
+After wiring the swoosh, run `npx hyperframes inspect index.html` to confirm no overlay element overflows the canvas, and `npx hyperframes validate index.html` to confirm contrast on any text visible *behind* the overlay is still WCAG-clean during the sweep.
+
+**Manual check:** neither `inspect` nor `validate` detects `mix-blend-mode: screen` luminance overflow — they're layout and contrast checks, not luminance audits. Preview the swoosh against your brightest scene background by eye; `screen` blending can push near-white past 100% luminance and produce a flash. If that happens, drop the band's `rgba` alpha to ~0.65, or remove the blend mode and rely on `opacity` alone.
