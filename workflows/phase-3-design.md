@@ -13,7 +13,8 @@ Pick the most specific path that Phase 1 Step 1.2 set up.
 **If Phase 1 recorded `design_system: <slug>`** in `project-plan.md` (one of `stripe`, `linear-app`, `apple`, `notion`, `vercel`, `airbnb`, `github`, `cal`, `arc`, `bento`), the brand specification ships with the skill. Copy it straight into the project root:
 
 ```bash
-cp ${SKILL_DIR}/design-systems/<slug>/DESIGN.md ./DESIGN.md
+SKILL_DIR=~/.claude/skills/hve-spielberg   # or .claude/skills/hve-spielberg for per-project install
+cp "$SKILL_DIR/design-systems/<slug>/DESIGN.md" ./DESIGN.md
 ```
 
 Every preset includes the sections a HyperFrames composition actually needs: atmosphere, palette, typography, depth, **motion** (the section that distinguishes a video preset from a generic web spec), per-scene-type applications, and brand-specific anti-patterns. See `design-systems/README.md` for the catalog.

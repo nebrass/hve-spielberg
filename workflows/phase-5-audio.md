@@ -63,7 +63,8 @@ Edit `scripts/generate_voiceover.py`:
 - Set `VIDEO_DURATION` to match composition
 
 ```bash
-python3 ${SKILL_DIR}/scripts/generate_voiceover.py
+SKILL_DIR=~/.claude/skills/hve-spielberg   # or .claude/skills/hve-spielberg for per-project install
+python3 "$SKILL_DIR/scripts/generate_voiceover.py"
 ```
 
 ### Alternative: HyperFrames-native TTS (no API key, local)
@@ -94,11 +95,11 @@ npx hyperframes transcribe voiceover.mp3 --model tiny
 cat transcript.json | python3 -m json.tool | head -30
 ```
 
-Falls back to standalone `whisper`:
+Falls back to standalone `whisper` (use `--output_format json` so the timing data is consumable by `scripts/generate_voiceover.py` — SRT is a presentation format, not a parsing target):
 
 ```bash
-whisper voiceover.mp3 --model tiny --output_format srt
-cat voiceover.srt
+whisper voiceover.mp3 --model tiny --output_format json --output_dir .
+cat voiceover.json | python3 -m json.tool | head -30
 ```
 
 **Whisper tiny-model timestamps drift ±0.5s** because the model extends word boundaries into trailing silence. For precise per-section gap analysis, use `ffmpeg silencedetect` instead — it's exact:
@@ -121,10 +122,11 @@ Compare timestamps against scene timings. If ANY overlap detected:
 
 ### Pad voiceover to VIDEO_DURATION
 
-The voiceover audio must match the composition's total duration exactly. If it's shorter, HyperFrames render finds no audio for trailing frames and may truncate. Pad with `apad`:
+The voiceover audio must match the composition's total duration exactly. If it's shorter, HyperFrames render finds no audio for trailing frames and may truncate. Pad with `apad`. Use the same `VIDEO_DURATION` the composition uses (from `project-plan.md`); the literal `60` below is just an example for a 60s spot — replace it with your project's duration:
 
 ```bash
-ffmpeg -y -i voiceover.mp3 -af "apad=whole_dur=60" -c:a libmp3lame -q:a 2 voiceover-padded.mp3
+VIDEO_DURATION=60   # match the duration chosen in Phase 1
+ffmpeg -y -i voiceover.mp3 -af "apad=whole_dur=${VIDEO_DURATION}" -c:a libmp3lame -q:a 2 voiceover-padded.mp3
 mv voiceover-padded.mp3 voiceover.mp3
 ```
 
@@ -201,9 +203,10 @@ ffmpeg -y -i voiceover.mp3 -af "loudnorm=I=-16:TP=-1.5:LRA=11" voiceover-normali
 ### Mix music (if using background music)
 
 ```bash
-# DURATION = video length in seconds; FADE_OUT_START = DURATION - 3
-DURATION=42
-FADE_OUT_START=39
+# DURATION = video length in seconds (from Phase 1 / project-plan.md);
+# FADE_OUT_START = DURATION - 3
+DURATION=60                                # ← replace with your video duration
+FADE_OUT_START=$((DURATION - 3))
 
 ffmpeg -y -i voiceover-normalized.mp3 -i background-music.mp3 \
   -filter_complex "
@@ -250,14 +253,15 @@ The HyperFrames composition (`index.html`) already references `voiceover-with-mu
 Re-run the validation gates after wiring the audio clip, in case any caption sub-composition overlaps a visual element:
 
 ```bash
-npx hyperframes lint
-npx hyperframes inspect
-npx hyperframes validate
+npx hyperframes lint     index.html --strict      # --strict catches "audio element has no id" (silent-video failure mode)
+npx hyperframes inspect  index.html --samples 10
+npx hyperframes validate index.html
 ```
 
 ### Render
 
 ```bash
+mkdir -p out
 npx hyperframes render --output out/final.mp4
 ```
 
@@ -268,6 +272,7 @@ HyperFrames renders via headless Chromium and muxes audio in the same pass. Outp
 Render without the audio clip wired up, then mux separately with ffmpeg:
 
 ```bash
+mkdir -p out
 npx hyperframes render --output out/video-silent.mp4
 ffmpeg -y -i out/video-silent.mp4 -i voiceover-with-music.mp3 \
   -c:v copy -c:a aac -map 0:v:0 -map 1:a:0 -shortest \
@@ -303,8 +308,11 @@ Known issues:
 ## Output
 
 - `out/final.mp4` — Final video with voiceover and music
-- `voiceover.mp3` — Raw voiceover
-- `transcript.json` — Word-level timing from `npx hyperframes transcribe` (default), OR `voiceover.srt` if you used the standalone-whisper fallback
+- `voiceover.mp3` — Raw voiceover (padded to `VIDEO_DURATION`)
+- `voiceover-normalized.mp3` — Loudness-normalized voiceover (input to the mix step)
+- `background-music.mp3` — Selected Freesound track (if Step 5.2 ran)
+- `voiceover-with-music.mp3` — Voiceover + music mix; **the file `index.html`'s `<audio src>` references — render is silent without it**
+- `transcript.json` — Word-level timing from `npx hyperframes transcribe` (default), OR `voiceover.json` if you used the standalone-whisper fallback (`--output_format json`)
 
 ## Checkpoint
 
