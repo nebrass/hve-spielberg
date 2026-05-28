@@ -14,6 +14,12 @@ Output:
     voiceover.json     — Whisper-or-hyperframes-transcribe timing data
     vo_section_NN.mp3  — per-section intermediate files (kept for debugging)
 
+Note:
+    index.html's <audio src> is voiceover-with-music.mp3 (the loudnorm +
+    music mix), NOT voiceover.mp3. Running only this script then
+    `npx hyperframes render` produces a SILENT video. See README.md for the
+    normalize + music-mix ffmpeg steps that create voiceover-with-music.mp3.
+
 Environment:
     ELEVENLABS_API_KEY — Required.
 """
@@ -28,7 +34,8 @@ from pathlib import Path
 try:
     import requests
 except ImportError:
-    print("Installing requests...")
+    print("requests not found — auto-installing into the current Python "
+          "environment (Ctrl-C to abort)...", file=sys.stderr)
     subprocess.check_call([sys.executable, "-m", "pip", "install", "requests"])
     import requests
 

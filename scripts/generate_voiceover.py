@@ -45,7 +45,8 @@ from pathlib import Path
 try:
     import requests
 except ImportError:
-    print("Installing requests...")
+    print("requests not found — auto-installing into the current Python "
+          "environment (Ctrl-C to abort)...", file=sys.stderr)
     subprocess.check_call([sys.executable, "-m", "pip", "install", "requests"])
     import requests
 
