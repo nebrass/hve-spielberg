@@ -262,7 +262,7 @@ npx hyperframes validate .
 
 ```bash
 mkdir -p out
-npx hyperframes render --output out/final.mp4
+npx hyperframes render . --output out/final.mp4
 ```
 
 HyperFrames renders via headless Chromium and muxes audio in the same pass. Output is an MP4 (H.264 + AAC) at the canvas size chosen in Phase 1 (1920×1080 / 1080×1920 / 1080×1080 / 1080×1350).
@@ -273,7 +273,7 @@ Render without the audio clip wired up, then mux separately with ffmpeg:
 
 ```bash
 mkdir -p out
-npx hyperframes render --output out/video-silent.mp4
+npx hyperframes render . --output out/video-silent.mp4
 ffmpeg -y -i out/video-silent.mp4 -i voiceover-with-music.mp3 \
   -c:v copy -c:a aac -map 0:v:0 -map 1:a:0 -shortest \
   out/final.mp4

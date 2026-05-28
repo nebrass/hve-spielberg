@@ -175,7 +175,7 @@ my-video-project/
 ├── index.html                # Phase 4 root HyperFrames composition
 ├── voiceover.mp3             # ElevenLabs TTS output
 ├── transcript.json           # `npx hyperframes transcribe` timing data
-                              # (or voiceover.srt if you used standalone whisper)
+                              # (or voiceover.json if you used standalone whisper)
 ├── background-music.mp3      # Freesound or user-provided
 ├── voiceover-with-music.mp3  # Mixed track wired into index.html
 └── out/
