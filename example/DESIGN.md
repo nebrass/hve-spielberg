@@ -66,9 +66,11 @@ Vercel's brand is *razor-sharp minimalism*. Very fast entrances, hard contrast, 
 | Scene-to-scene transition | **`flash-through-white` catalog block** (0.3–0.4s) — the iconic Vercel motion |
 | Section-boundary | Hard cut OR flash-through-white |
 | Stat-counter ease | `power2.out`, ~1.6s (faster than other brands) |
-| Avoid | Soft crossfades over 0.5s, swoosh transitions, marker highlights, anything ornamental |
+| Avoid | Soft crossfades over 0.5s, swoosh transitions, anything ornamental |
 
 Vercel's voice is "deploys finish in milliseconds, ship is instant." Motion duration carries that message. Slower than 0.6s reads as off-brand.
+
+> **Marker highlight — one deliberate exception.** The shared `design-systems/vercel/DESIGN.md` lists marker highlights under *Avoid*. This project keeps exactly **one**: the ship-red (`#ff5b4f`) sweep on "This whole video." in `scenes/00-hero.html` — the single editorial emphasis beat (≤0.5s, `power2.out`, brand-colored, never ornamental). One per video; do not add a second.
 
 ## 6. Video applications
 
