@@ -146,6 +146,8 @@ cp -r ~/.claude/skills/hve-spielberg my-project/.claude/skills/hve-spielberg
 | Daniel | Authoritative male | `onwK4e9ZLuTAKqWW03F9` |
 | Josh | Friendly, conversational male | `TxGEqnHWrfWFTfGW9XjX` |
 
+**No-key fallback (Kokoro-82M):** when `ELEVENLABS_API_KEY` is unset, Phase 5 uses `npx hyperframes tts` — 54 local voices across 8 languages (e.g. `af_nova`, `af_heart`). List them with `npx hyperframes tts --list`; see the HyperFrames skill's `references/tts.md` for the full catalog.
+
 ## Music Strategy
 
 No bundled audio files. Three-tier approach:

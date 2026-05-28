@@ -64,11 +64,11 @@ ffmpeg -y -i voiceover-normalized.mp3 -i background-music.mp3 \
 
 # 5. Run quality gates + render
 npx hyperframes doctor
-npx hyperframes lint . --strict
-npx hyperframes inspect . --samples 12
-npx hyperframes validate .
+npx hyperframes lint     index.html --strict
+npx hyperframes inspect  index.html --samples 12
+npx hyperframes validate index.html
 mkdir -p out
-npx hyperframes render . --output out/final.mp4 --quality high
+npx hyperframes render   --output out/final.mp4 --quality high
 ```
 
 Render time: ~20–30s on a 16-core machine with hardware GPU.
