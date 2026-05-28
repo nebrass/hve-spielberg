@@ -9,6 +9,7 @@ VO timing discipline (per `workflows/phase-5-audio.md`):
 - VO starts ≥1.0s after scene start (entry buffer for visuals to land)
 - VO ends ≥0.5s before scene end (tail buffer for breathing)
 - Adjacent scenes OVERLAP during the 0.4s crossfade window (data-duration extends 0.4s past nominal end, next data-start moves 0.4s earlier)
+- The VO end-times below are **nominal estimates** mirrored from `voiceover.py`'s per-section budget; rendered ElevenLabs durations vary ±0.5s. Verify with `npx hyperframes transcribe voiceover.mp3` and adjust if any section overruns its scene window.
 
 ---
 
@@ -23,7 +24,7 @@ VO timing discipline (per `workflows/phase-5-audio.md`):
 - Marker-sweep highlight on "This whole video." — Vercel ship-red `#ff5b4f` (`patterns/marker-highlight.md` § highlight mode)
 - Canvas `#ffffff`, near-black text `#171717`
 
-**Voiceover (1.0s → ~4.6s):**
+**Voiceover (1.0s → ~5.0s):**
 > "One slash command. This whole video. Made in Claude Code."
 
 **Animation:**
@@ -51,7 +52,7 @@ VO timing discipline (per `workflows/phase-5-audio.md`):
   4. ✓ Rendered `final.mp4`
 - Closing line: "Done in 14m 22s"
 
-**Voiceover (7.4s → ~15.6s):**
+**Voiceover (7.4s → ~15.0s):**
 > "Inside Claude Code. Slash Aitch Vee Ee Spielberg. It interviews you, picks a brand, captures your app, renders the video."
 
 **Animation:**
@@ -78,7 +79,7 @@ VO timing discipline (per `workflows/phase-5-audio.md`):
   - 5. **Compose the timeline** — GSAP tweens, sub-second precision
   - 6. **Render the video** — headless Chrome, deterministic MP4
 
-**Voiceover (17.4s → ~32.8s, 15.4s):**
+**Voiceover (17.4s → ~31.5s, ~14s):**
 > "Six phases. Discover with design thinking. Storyboard the narrative. Capture via Chrome DevTools. Design with brand DNA. Compose with GSAP at sub-second precision. Render to deterministic MP4."
 
 **Animation:**
@@ -99,7 +100,7 @@ VO timing discipline (per `workflows/phase-5-audio.md`):
 - **02. ElevenLabs · Whisper · Freesound.** *Voice generated. Timing verified. Score licensed CC-BY. The audio pipeline, end to end.*
 - **03. Headless Chrome render.** *Fifteen minutes from prompt to MP4. Deterministic. Re-runnable. Yours to edit.*
 
-**Voiceover (33.4s → ~45.3s):**
+**Voiceover (33.4s → ~46.0s):**
 > "This video proves the loop. Vercel design system. ElevenLabs voiceover. Whisper-verified timing. Freesound score. Headless Chrome render. Fifteen minutes, not three weeks."
 
 **Animation:**
