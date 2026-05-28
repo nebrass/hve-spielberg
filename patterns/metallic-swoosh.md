@@ -92,6 +92,6 @@ In Phase 4, the root composition wires inter-scene transitions in its own timeli
 
 ## Validation
 
-After wiring the swoosh, run `npx hyperframes inspect index.html` to confirm no overlay element overflows the canvas, and `npx hyperframes validate index.html` to confirm contrast on any text visible *behind* the overlay is still WCAG-clean during the sweep.
+After wiring the swoosh, run `npx hyperframes inspect .` to confirm no overlay element overflows the canvas, and `npx hyperframes validate .` to confirm contrast on any text visible *behind* the overlay is still WCAG-clean during the sweep. (The gates take the project directory, not a file.)
 
 **Manual check:** neither `inspect` nor `validate` detects `mix-blend-mode: screen` luminance overflow — they're layout and contrast checks, not luminance audits. Preview the swoosh against your brightest scene background by eye; `screen` blending can push near-white past 100% luminance and produce a flash. If that happens, drop the band's `rgba` alpha to ~0.65, or remove the blend mode and rely on `opacity` alone.

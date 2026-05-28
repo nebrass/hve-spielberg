@@ -253,9 +253,9 @@ The HyperFrames composition (`index.html`) already references `voiceover-with-mu
 Re-run the validation gates after wiring the audio clip, in case any caption sub-composition overlaps a visual element:
 
 ```bash
-npx hyperframes lint     index.html --strict      # --strict catches "audio element has no id" (silent-video failure mode)
-npx hyperframes inspect  index.html --samples 10
-npx hyperframes validate index.html
+npx hyperframes lint     .                # flags "audio element has no id" (silent-video failure mode) by default
+npx hyperframes inspect  . --samples 10
+npx hyperframes validate .
 ```
 
 ### Render

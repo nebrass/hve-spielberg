@@ -196,21 +196,21 @@ Default to a quiet crossfade. Use `patterns/metallic-swoosh.md` only at major na
 
 ## Step 4.6: Preview
 
-Open the composition in the HyperFrames Studio (headless Chrome + scrubbable timeline UI):
+Open the composition in the HyperFrames Studio (headless Chrome + scrubbable timeline UI). The studio lists every composition in the project — `main` plus each scene sub-composition — so you can scrub them individually:
 
 ```bash
-npx hyperframes preview index.html
+npx hyperframes preview .
 ```
 
 Iterate. Then run the three gates before moving on:
 
 ```bash
-npx hyperframes lint     index.html --strict      # fails on warnings, not just errors
-npx hyperframes inspect  index.html --samples 10  # visual layout audit (no overlaps) — use 15 for dense cuts
-npx hyperframes validate index.html               # WCAG AA contrast at sampled timestamps
+npx hyperframes lint     .                # project DIR, not a file — finds index.html (flags missing audio id, track overlaps, etc.)
+npx hyperframes inspect  . --samples 10   # visual layout audit (no overlaps) — use 15 for dense cuts
+npx hyperframes validate .                # WCAG AA contrast + console errors in headless Chrome
 ```
 
-`--strict` on `lint` promotes warnings to errors — useful in CI / before final render. Without it, warnings like "audio element has no id" pass silently and produce a silently broken render.
+All gates take the project **directory** (they resolve `index.html` inside it), not a file path — `lint index.html` errors with "Not a directory". `lint` reports issues like "audio element has no id" by default. To fail a build on warnings, use `inspect --strict` or `render --strict` / `--strict-all` (`lint` and `validate` have no `--strict`).
 
 `--samples` controls how many timestamps `inspect` seeks to. Typical convention: `--samples 10` for 30s spots, `--samples 15` for denser transition-heavy cuts. Use `--at 1.5,4,7.25` instead if you want to audit specific hero frames.
 
