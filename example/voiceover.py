@@ -11,7 +11,8 @@ Usage:
 
 Output:
     voiceover.mp3      — final concatenated voiceover (silence padding included)
-    voiceover.json     — Whisper-or-hyperframes-transcribe timing data
+    transcript.json    — timing data from `npx hyperframes transcribe` (default),
+                         OR voiceover.json from the standalone-whisper fallback
     vo_section_NN.mp3  — per-section intermediate files (kept for debugging)
 
 Note:
@@ -148,6 +149,9 @@ def get_audio_duration(path: str) -> float:
         )
     except FileNotFoundError:
         raise RuntimeError("ffprobe not installed — install ffmpeg")
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"ffprobe failed for {path} (file may be corrupt): "
+                           f"{(e.stderr or '').strip()[:200]}")
     out = result.stdout.strip()
     if not out:
         raise RuntimeError(f"ffprobe returned empty duration for {path}")
@@ -169,25 +173,34 @@ def assemble_voiceover(section_files: list, output_path: str = "voiceover.mp3"):
     # location, NOT the cwd. The concat-list lives in /tmp, so relative paths
     # like "vo_section_00.mp3" silently fail to resolve, producing a near-empty
     # output. Use absolute paths everywhere.
+    # try/finally wraps BOTH the build loop and the concat so the concat-list
+    # and silence tempfiles are unlinked even if get_audio_duration or
+    # _make_silence raises mid-loop (the loop runs before the concat).
     silence_paths: list = []
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
-        concat_list = f.name
-        for i, (start_time, audio_path) in enumerate(section_files):
-            audio_abs = os.path.abspath(audio_path)
-            duration = get_audio_duration(audio_abs)
-            if i == 0 and start_time > 0:
-                sp = _make_silence(start_time)
-                silence_paths.append(sp)
-                f.write(f"file '{sp}'\n")
-            f.write(f"file '{audio_abs}'\n")
-            if i < len(section_files) - 1:
-                next_start = section_files[i + 1][0]
-                gap = next_start - start_time - duration
-                if gap > 0:
-                    sp = _make_silence(gap)
+    concat_list = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
+            concat_list = f.name
+            for i, (start_time, audio_path) in enumerate(section_files):
+                audio_abs = os.path.abspath(audio_path)
+                duration = get_audio_duration(audio_abs)
+                if i == 0 and start_time > 0:
+                    sp = _make_silence(start_time)
                     silence_paths.append(sp)
                     f.write(f"file '{sp}'\n")
-    try:
+                f.write(f"file '{audio_abs}'\n")
+                if i < len(section_files) - 1:
+                    next_start = section_files[i + 1][0]
+                    gap = next_start - start_time - duration
+                    if gap > 0:
+                        sp = _make_silence(gap)
+                        silence_paths.append(sp)
+                        f.write(f"file '{sp}'\n")
+                    elif gap < 0:
+                        print(f"  WARNING: section {i} audio overruns its "
+                              f"{next_start - start_time:.1f}s slot by {-gap:.1f}s "
+                              "— later sections start early and desync. "
+                              "Shorten this section's text.", file=sys.stderr)
         subprocess.run([
             "ffmpeg", "-y", "-f", "concat", "-safe", "0",
             "-i", concat_list, "-c:a", "libmp3lame", "-q:a", "2",
@@ -195,10 +208,11 @@ def assemble_voiceover(section_files: list, output_path: str = "voiceover.mp3"):
         ], capture_output=True, check=True)
     finally:
         for p in [concat_list, *silence_paths]:
-            try:
-                os.unlink(p)
-            except OSError:
-                pass
+            if p:
+                try:
+                    os.unlink(p)
+                except OSError:
+                    pass
 
     # Pad to exact VIDEO_DURATION (mirror of scripts/generate_voiceover.py).
     # Without this, the last section ends ~1-2s before the composition's
@@ -222,6 +236,11 @@ def assemble_voiceover(section_files: list, output_path: str = "voiceover.mp3"):
         raise
 
     final_dur = get_audio_duration(output_path)
+    if final_dur > VIDEO_DURATION + 0.1:
+        print(f"  WARNING: voiceover is {final_dur:.2f}s but VIDEO_DURATION is "
+              f"{VIDEO_DURATION}s. apad only extends — it cannot trim — so the "
+              "narration overruns the composition. Shorten the script.",
+              file=sys.stderr)
     print(f"  Assembled + padded: {output_path} ({final_dur:.2f}s)")
 
 
