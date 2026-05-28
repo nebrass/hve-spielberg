@@ -114,13 +114,25 @@ def generate_section(text: str, output_path: str) -> bool:
 
 
 def get_audio_duration(path: str) -> float:
-    """Get duration of an audio file in seconds using ffprobe."""
-    result = subprocess.run(
-        ["ffprobe", "-i", path, "-show_entries", "format=duration",
-         "-v", "quiet", "-of", "csv=p=0"],
-        capture_output=True, text=True,
-    )
-    return float(result.stdout.strip())
+    """Get duration of an audio file in seconds using ffprobe.
+
+    Surfaces a clear error on the two common failure modes (ffprobe missing
+    or input file empty/corrupt) instead of crashing with a generic
+    ValueError from float("").
+    """
+    try:
+        result = subprocess.run(
+            ["ffprobe", "-i", path, "-show_entries", "format=duration",
+             "-v", "quiet", "-of", "csv=p=0"],
+            capture_output=True, text=True, check=True,
+        )
+    except FileNotFoundError:
+        raise RuntimeError("ffprobe not installed — install ffmpeg")
+    out = result.stdout.strip()
+    if not out:
+        raise RuntimeError(f"ffprobe returned empty duration for {path} "
+                           "(file may be 0 bytes or corrupt)")
+    return float(out)
 
 
 # ─── Assembly ────────────────────────────────────────────────────────────────
@@ -149,6 +161,7 @@ def assemble_voiceover(section_files: list, output_path: str = "voiceover.mp3"):
     2. `tempfile.mktemp` is deprecated since Python 2.3 (race-prone). Use
        `mkstemp` instead — wrapped in `_make_silence` above.
     """
+    silence_paths: list = []
     with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
         concat_list = f.name
 
@@ -158,7 +171,9 @@ def assemble_voiceover(section_files: list, output_path: str = "voiceover.mp3"):
 
             # Initial silence before the first section's start time
             if i == 0 and start_time > 0:
-                f.write(f"file '{_make_silence(start_time)}'\n")
+                sp = _make_silence(start_time)
+                silence_paths.append(sp)
+                f.write(f"file '{sp}'\n")
 
             f.write(f"file '{audio_abs}'\n")
 
@@ -167,27 +182,44 @@ def assemble_voiceover(section_files: list, output_path: str = "voiceover.mp3"):
                 next_start = section_files[i + 1][0]
                 gap = next_start - start_time - duration
                 if gap > 0:
-                    f.write(f"file '{_make_silence(gap)}'\n")
+                    sp = _make_silence(gap)
+                    silence_paths.append(sp)
+                    f.write(f"file '{sp}'\n")
 
-    # Concatenate all parts
-    subprocess.run([
-        "ffmpeg", "-y", "-f", "concat", "-safe", "0",
-        "-i", concat_list, "-c:a", "libmp3lame", "-q:a", "2",
-        output_path,
-    ], capture_output=True, check=True)
-    os.unlink(concat_list)
+    # Concatenate all parts. try/finally ensures the concat-list and every
+    # silence tempfile is unlinked even if ffmpeg raises (unbounded /tmp
+    # accumulation on CI otherwise).
+    try:
+        subprocess.run([
+            "ffmpeg", "-y", "-f", "concat", "-safe", "0",
+            "-i", concat_list, "-c:a", "libmp3lame", "-q:a", "2",
+            output_path,
+        ], capture_output=True, check=True)
+    finally:
+        for p in [concat_list, *silence_paths]:
+            try:
+                os.unlink(p)
+            except OSError:
+                pass
 
     # Pad to exact VIDEO_DURATION so HyperFrames render finds audio for every
     # frame. Without this, a short voiceover ends early and the trailing
     # frames render with no audio (HyperFrames may even truncate the video).
     fd, padded = tempfile.mkstemp(suffix=".mp3")
     os.close(fd)
-    subprocess.run([
-        "ffmpeg", "-y", "-i", output_path,
-        "-af", f"apad=whole_dur={VIDEO_DURATION}",
-        "-c:a", "libmp3lame", "-q:a", "2", padded,
-    ], capture_output=True, check=True)
-    os.replace(padded, output_path)
+    try:
+        subprocess.run([
+            "ffmpeg", "-y", "-i", output_path,
+            "-af", f"apad=whole_dur={VIDEO_DURATION}",
+            "-c:a", "libmp3lame", "-q:a", "2", padded,
+        ], capture_output=True, check=True)
+        os.replace(padded, output_path)
+    except Exception:
+        try:
+            os.unlink(padded)
+        except OSError:
+            pass
+        raise
 
     final_dur = get_audio_duration(output_path)
     print(f"  Assembled + padded: {output_path} ({final_dur:.2f}s)")
@@ -195,56 +227,96 @@ def assemble_voiceover(section_files: list, output_path: str = "voiceover.mp3"):
 
 # ─── Whisper Verification ────────────────────────────────────────────────────
 
+def _load_segments(path: Path) -> list:
+    """Read a transcript JSON file and normalize to a flat segment list.
+
+    Robust to: UTF-8 transcripts on Windows (default cp1252 would crash),
+    truncated/corrupt files written by a killed transcribe process, and
+    both shapes (`[...]` vs `{"segments": [...]}`).
+    """
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        print(f"  Could not parse {path}: {e}")
+        return []
+    if isinstance(data, list):
+        return data
+    if isinstance(data, dict):
+        return data.get("segments", []) or data.get("words", [])
+    return []
+
+
 def verify_transcript(voiceover_path: str) -> list:
     """Transcribe the voiceover for timing verification.
 
     Prefers `npx hyperframes transcribe` (bundled with HyperFrames — no extra
     install required) and falls back to standalone `whisper` if available.
 
-    Returns a flat list of word/segment dicts. Handles both shapes returned
-    by upstream tools: `[{start, end, text}, ...]` (bare list) and
-    `{"segments": [...]}` (dict).
+    Returns a flat list of word/segment dicts.
+
+    Pitfalls handled:
+      - subprocess.TimeoutExpired (slow npm fetch) — caught, not re-raised
+      - Non-zero returncode with a stale transcript.json from a prior run
+        in cwd would otherwise be loaded as the *current* result. We delete
+        any stale candidate before invoking the transcriber, and only load
+        files that exist *after* a successful (returncode == 0) run.
+      - Truncated/corrupt JSON — `_load_segments` returns [] instead of
+        crashing.
     """
+    candidates = [
+        Path("transcript.json"),
+        Path(voiceover_path).with_suffix(".json"),
+    ]
+
+    # Clear stale outputs so a failed transcriber can't pollute this run.
+    for c in candidates:
+        if c.exists():
+            try:
+                c.unlink()
+            except OSError:
+                pass
+
     # First try: hyperframes transcribe (bundled)
     try:
-        subprocess.run(
+        proc = subprocess.run(
             ["npx", "--yes", "hyperframes", "transcribe", voiceover_path,
              "--model", "tiny"],
             capture_output=True, text=True, timeout=300, check=False,
         )
-        for candidate in [Path("transcript.json"),
-                          Path(voiceover_path).with_suffix(".json")]:
-            if candidate.exists():
-                with open(candidate) as f:
-                    data = json.load(f)
-                if isinstance(data, list):
-                    return data
-                if isinstance(data, dict):
-                    return data.get("segments", []) or data.get("words", [])
-    except FileNotFoundError:
-        pass  # npx not available
+        if proc.returncode == 0:
+            for candidate in candidates:
+                if candidate.exists():
+                    segments = _load_segments(candidate)
+                    if segments:
+                        return segments
+        else:
+            print(f"  hyperframes transcribe exit {proc.returncode}: "
+                  f"{proc.stderr[:200]}")
+    except (FileNotFoundError, subprocess.TimeoutExpired) as e:
+        print(f"  hyperframes transcribe unavailable ({type(e).__name__}); "
+              "trying whisper fallback")
 
     # Fallback: standalone whisper (requires `pip install openai-whisper`)
     try:
-        subprocess.run(
+        proc = subprocess.run(
             ["whisper", voiceover_path, "--model", "tiny",
              "--output_format", "json", "--output_dir", "."],
             capture_output=True, text=True, timeout=180, check=False,
         )
-    except FileNotFoundError:
-        print("  Neither `hyperframes transcribe` nor `whisper` available — "
-              "skipping transcript verification")
+        if proc.returncode != 0:
+            print(f"  whisper exit {proc.returncode}: {proc.stderr[:200]}")
+            return []
+    except (FileNotFoundError, subprocess.TimeoutExpired) as e:
+        print(f"  Neither `hyperframes transcribe` nor `whisper` available "
+              f"({type(e).__name__}) — skipping transcript verification")
         return []
 
     json_path = Path(voiceover_path).with_suffix(".json")
     if not json_path.exists():
         print("  Transcript output not found — skipping verification")
         return []
-    with open(json_path) as f:
-        data = json.load(f)
-    if isinstance(data, list):
-        return data
-    return data.get("segments", []) or data.get("words", [])
+    return _load_segments(json_path)
 
 
 def check_overlaps(segments: list, sections: list) -> list:
