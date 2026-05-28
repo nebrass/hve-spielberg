@@ -246,11 +246,22 @@ def assemble_voiceover(section_files: list, output_path: str = "voiceover.mp3"):
 # ─── Whisper Verification ────────────────────────────────────────────────────
 
 def _load_segments(path: Path) -> list:
-    """Read a transcript JSON file and normalize to a flat segment list.
+    """Read a transcript JSON file and normalize to a flat WORD-level list.
 
-    Robust to: UTF-8 transcripts on Windows (default cp1252 would crash),
-    truncated/corrupt files written by a killed transcribe process, and
-    both shapes (`[...]` vs `{"segments": [...]}`).
+    Both transcribers are reconciled to one shape — a flat list of
+    `{start, end, ...}` words — so check_overlaps can detect a single word
+    crossing a section boundary:
+      - `hyperframes transcribe` already returns a flat word list
+        (`[{text, start, end}, ...]`).
+      - `whisper --word_timestamps True` returns
+        `{"segments": [{..., "words": [{word, start, end}, ...]}, ...]}`;
+        we flatten every segment's `words`. Without word-level timing, whisper
+        segments are whole sentences, and check_overlaps would flag a later
+        section's sentence as the *previous* section overrunning.
+
+    Falls back to segment-level if no word-level timing is present, and is
+    robust to UTF-8 transcripts on Windows (cp1252 default would crash) and
+    truncated/corrupt files (returns []).
     """
     try:
         with open(path, encoding="utf-8") as f:
@@ -261,7 +272,11 @@ def _load_segments(path: Path) -> list:
     if isinstance(data, list):
         return data
     if isinstance(data, dict):
-        return data.get("segments", []) or data.get("words", [])
+        segments = data.get("segments", [])
+        words = [w for seg in segments for w in seg.get("words", [])]
+        if words:
+            return words
+        return segments or data.get("words", [])
     return []
 
 
@@ -319,7 +334,8 @@ def verify_transcript(voiceover_path: str) -> list:
     try:
         proc = subprocess.run(
             ["whisper", voiceover_path, "--model", "tiny",
-             "--output_format", "json", "--output_dir", "."],
+             "--output_format", "json", "--word_timestamps", "True",
+             "--output_dir", "."],
             capture_output=True, text=True, timeout=180, check=False,
         )
         if proc.returncode != 0:

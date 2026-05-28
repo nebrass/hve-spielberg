@@ -95,10 +95,10 @@ npx hyperframes transcribe voiceover.mp3 --model tiny
 cat transcript.json | python3 -m json.tool | head -30
 ```
 
-Falls back to standalone `whisper` (use `--output_format json` so the timing data is consumable by `scripts/generate_voiceover.py` — SRT is a presentation format, not a parsing target):
+Falls back to standalone `whisper` (use `--output_format json` so the timing data is consumable by `scripts/generate_voiceover.py` — SRT is a presentation format, not a parsing target; add `--word_timestamps True` so segments carry per-word timing, which the overlap check needs — sentence-level segments produce false positives):
 
 ```bash
-whisper voiceover.mp3 --model tiny --output_format json --output_dir .
+whisper voiceover.mp3 --model tiny --output_format json --word_timestamps True --output_dir .
 cat voiceover.json | python3 -m json.tool | head -30
 ```
 

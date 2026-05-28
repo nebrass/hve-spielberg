@@ -245,10 +245,20 @@ def assemble_voiceover(section_files: list, output_path: str = "voiceover.mp3"):
 
 
 def _load_segments(path: Path) -> list:
-    """Read a transcript JSON and normalize to a segment list.
+    """Read a transcript JSON and normalize to a flat WORD-level list.
 
-    Tolerates UTF-8 transcripts on Windows (default cp1252 would crash) and
-    truncated/corrupt files (returns [] instead of raising).
+    Both transcribers are reconciled to one shape (a flat list of
+    `{start, end, ...}` words) so check_overlaps can detect a single word
+    crossing a section boundary:
+      - `hyperframes transcribe` already returns a flat word list.
+      - `whisper --word_timestamps True` nests words under segments
+        (`{"segments": [{"words": [...]}]}`); we flatten them. Without
+        word-level timing, whisper segments are whole sentences and
+        check_overlaps would flag a later section's sentence as the previous
+        section overrunning.
+
+    Falls back to segment-level if no words are present; tolerates UTF-8
+    transcripts on Windows and truncated/corrupt files (returns []).
     """
     try:
         with open(path, encoding="utf-8") as f:
@@ -259,7 +269,11 @@ def _load_segments(path: Path) -> list:
     if isinstance(data, list):
         return data
     if isinstance(data, dict):
-        return data.get("segments", []) or data.get("words", [])
+        segments = data.get("segments", [])
+        words = [w for seg in segments for w in seg.get("words", [])]
+        if words:
+            return words
+        return segments or data.get("words", [])
     return []
 
 
@@ -304,7 +318,8 @@ def verify_with_hyperframes(voiceover_path: str) -> list:
     try:
         proc = subprocess.run(
             ["whisper", voiceover_path, "--model", "tiny",
-             "--output_format", "json", "--output_dir", "."],
+             "--output_format", "json", "--word_timestamps", "True",
+             "--output_dir", "."],
             capture_output=True, text=True, timeout=180, check=False,
         )
         if proc.returncode != 0:
