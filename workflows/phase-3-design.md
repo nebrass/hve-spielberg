@@ -148,18 +148,17 @@ Transition pattern reference (when an archetype owns its own outgoing flourish):
 
 **Before authoring a scene from scratch**, check the HyperFrames catalog — blocks like `app-showcase`, `ui-3d-reveal`, `data-chart`, `logo-outro`, and `reddit-post` are drop-in sub-compositions that cover most product-video archetypes. See Phase 4 Step 4.2 for the `npx hyperframes add <name>` workflow. Pulling a catalog block is almost always faster than hand-authoring an equivalent scene.
 
-## Step 3.3: Preview and Iterate
+## Step 3.3: Author Scenes (preview + gates run in Phase 4)
 
-Run the HyperFrames preview server against the `scenes/` directory to open each template in a scrubbable timeline UI:
+Build each scene template to match `DESIGN.md`. A scene file is a `<template>`-wrapped sub-composition: it can't be previewed standalone (the HyperFrames runtime clones and drives it), and the CLI gates take a project **directory** that resolves `index.html` — which doesn't exist until Phase 4. So per-scene preview and the mechanical gates run in Phase 4, after `index.html` references the scenes:
 
-```bash
-npx hyperframes preview scenes/00-title-card.html
-```
+- `npx hyperframes preview .` opens the studio, which lists `main` **plus every scene composition individually** for scrubbing.
+- `npx hyperframes lint .` / `inspect . --samples 10` / `validate .` check the assembled project.
 
-Iterate one scene at a time. Common issues to fix before moving on:
+Author with these failure modes in mind so Phase 4's gates pass first try:
 
-- Overlapping elements at rest (run `npx hyperframes inspect scenes/00-title-card.html --samples 5` — per-scene templates need fewer samples than full compositions)
-- Text contrast failures (run `npx hyperframes validate scenes/00-title-card.html`)
+- Overlapping elements at rest (Phase 4 `inspect` flags container/text overflow)
+- Text contrast below WCAG AA (Phase 4 `validate` runs a contrast audit)
 - Animations that imply an exit (Phase 4 transitions own the exit — see DON'Ts in `SKILL.md`)
 
 Then ask the user:
@@ -188,6 +187,6 @@ Phase 2 screenshots already live at `public/screenshots/`; Phase 4 will referenc
 
 ## Checkpoint
 
-> "Design contract and [N] scene templates ready. Palette + typography locked in `DESIGN.md`. Templates previewed individually and pass `hyperframes inspect`.
+> "Design contract and [N] scene templates ready. Palette + typography locked in `DESIGN.md`. Scenes are verified in Phase 4 — `preview .` lists each one individually for scrubbing and `lint`/`inspect`/`validate .` run on the assembled composition.
 >
 > Ready to move to Phase 4: Composition assembly?"
