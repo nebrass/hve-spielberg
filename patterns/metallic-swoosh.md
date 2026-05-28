@@ -8,8 +8,8 @@ A premium diagonal shine for section changes. Implemented as a crossfade between
 
 Three things happen during the swoosh window:
 
-1. **Outgoing scene clip** fades `opacity: 1 → 0`.
-2. **Incoming scene clip** fades `opacity: 0 → 1` over the same window.
+1. **Outgoing scene clip** stays opaque underneath until its clip ends — it is *not* faded out (see the crossfade note below).
+2. **Incoming scene clip** fades `opacity: 0 → 1`, painting on top of the outgoing scene.
 3. **Shine overlay** — a thin, hot diagonal band whose `background-position` sweeps across the frame during the same window.
 
 ## Implementation (inline in the root `index.html`)
@@ -26,7 +26,7 @@ In Phase 4, the root composition wires inter-scene transitions in its own timeli
 
 <div data-composition-id="scene-02"
      data-composition-src="scenes/02.html"
-     data-start="5"  data-duration="5"   data-track-index="1"
+     data-start="5"  data-duration="5"   data-track-index="2"
      style="opacity:0"></div>
 
 <!-- Shine overlay. Painting order is controlled by CSS z-index (see <style> below);
@@ -63,8 +63,11 @@ In Phase 4, the root composition wires inter-scene transitions in its own timeli
   // window.__timelines["main"] is registered in index.html (see Phase 4).
   const root = window.__timelines["main"];
 
-  // Crossfade: 0.4s, centered on t=5s.
-  root.to('[data-composition-id="scene-01"]', { opacity: 0, duration: 0.4, ease: "power2.inOut" }, 5);
+  // Crossfade: 0.4s starting at t=5s. Fade ONLY the incoming scene 0→1; the
+  // outgoing scene stays opaque underneath until its clip ends at 5.4s. Fading
+  // both at once drops each to ~0.5 opacity at the midpoint, letting the white
+  // body bg show through everywhere the shine band isn't — a brightness flash.
+  // (Same incoming-only rule as transition-catalog.md / phase-4-production.md.)
   root.to('[data-composition-id="scene-02"]', { opacity: 1, duration: 0.4, ease: "power2.inOut" }, 5);
 
   // Shine: pop in, sweep across, fade out — all inside the 0.4s window.

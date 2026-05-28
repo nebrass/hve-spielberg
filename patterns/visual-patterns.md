@@ -127,11 +127,11 @@ tl.to(stat, {
 
 ### Browser Mockup with 3D Tilt
 
-Pure CSS — no Remotion-specific wrappers.
+Pure CSS — no GSAP needed for the tilt itself.
 
 ```html
 <div class="mockup">
-  <img src="screenshots/scene-01.png" alt="">
+  <img src="public/screenshots/scene-01.png" alt="">
 </div>
 
 <style>
@@ -197,9 +197,7 @@ HyperFrames' `validate` enforces WCAG AA contrast (4.5:1 normal text, 3:1 large 
 - **No full 360° rotations** — disorienting. Subtle `rotateY` ≤ 8° or `rotateZ` ≤ 4° only.
 - **No exit animations on non-final scenes** — let the transition handle the exit. Animating the same element out and then transitioning the scene out is double-motion.
 - **No `clipPath` for transitions** — produces anti-aliased black slivers between scenes. Use crossfade + shine instead (see `metallic-swoosh.md`).
-- **Never animate `display`, `visibility`, or `.play()`** — they break HyperFrames' deterministic seek. Use `opacity` + `pointer-events`.
-- **Never animate `<img>` dimensions directly** — wrap each animated `<img>` in a non-timed `<div>` and tween the wrapper's `transform` (`scale`, `translate`). Animating `width`/`height` on the `<img>` causes layout recompute that breaks deterministic seek.
-- **Never animate `visibility` or `display`** — GSAP can't tween these. Use `autoAlpha` (handles both opacity AND visibility in one property), or animate `opacity` + set `pointer-events: none` via a class:
+- **Never animate `display`, `visibility`, or call `.play()` inside a timeline** — GSAP can't tween `display`/`visibility` (they're binary), and `.play()` from inside a timeline breaks HyperFrames' deterministic seek. Use `autoAlpha` (which tweens opacity AND toggles visibility) or `opacity` + `pointer-events: none`:
   ```js
   // ✅ correct — autoAlpha tweens opacity AND toggles visibility
   tl.fromTo("#el", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5 }, 0.3);
@@ -207,6 +205,7 @@ HyperFrames' `validate` enforces WCAG AA contrast (4.5:1 normal text, 3:1 large 
   // ❌ wrong — visibility:hidden is binary, GSAP can't interpolate it
   tl.from("#el", { visibility: "hidden", duration: 0.5 }, 0.3);
   ```
+- **Never animate `<img>` dimensions directly** — wrap each animated `<img>` in a non-timed `<div>` and tween the wrapper's `transform` (`scale`, `translate`). Animating `width`/`height` on the `<img>` causes layout recompute that breaks deterministic seek.
 - **Never use `gsap.set()` at script-load time on elements that enter the timeline later** — sub-comp clips with `data-start > 0` aren't in the DOM at page load. Their elements don't exist yet, so `gsap.set("#late-element", ...)` is a no-op. Instead, use `tl.set(selector, vars, timePosition)` *inside the timeline* at or after the clip's `data-start`:
   ```js
   // ✅ correct — runs inside the timeline at t=5s, after #late-card exists
