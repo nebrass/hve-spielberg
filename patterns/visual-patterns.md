@@ -70,13 +70,15 @@ The failure mode is silent — there's no console error or lint warning. Element
 
 ## Scene Entry Catalog
 
+> These snippets use `autoAlpha`, not bare `opacity`. Scene elements rest at `visibility: hidden; opacity: 0` in CSS (see the DON'Ts below); `autoAlpha` tweens opacity *and* clears `visibility`, so the element actually appears. A plain `opacity` tween would leave `visibility: hidden` in place and the element would never show.
+
 ### Fade Up
 Clean, professional. Default for headlines and body copy.
 
 ```js
 tl.fromTo(".fade-up",
-  { y: 40, opacity: 0 },
-  { y: 0, opacity: 1, duration: 0.6, ease: "power3.out", stagger: 0.08 },
+  { y: 40, autoAlpha: 0 },
+  { y: 0, autoAlpha: 1, duration: 0.6, ease: "power3.out", stagger: 0.08 },
   0.2);
 ```
 
@@ -85,8 +87,8 @@ Energetic, modern. Good for badges, stat cards, CTAs.
 
 ```js
 tl.fromTo(".scale-in",
-  { scale: 0.85, opacity: 0 },
-  { scale: 1, opacity: 1, duration: 0.55, ease: "back.out(1.4)" },
+  { scale: 0.85, autoAlpha: 0 },
+  { scale: 1, autoAlpha: 1, duration: 0.55, ease: "back.out(1.4)" },
   0.3);
 ```
 
@@ -95,8 +97,8 @@ Multiple elements arriving in sequence — list items, feature pills, social pro
 
 ```js
 tl.fromTo(".feature-pill",
-  { y: 24, opacity: 0 },
-  { y: 0, opacity: 1, duration: 0.45, ease: "power2.out", stagger: 0.12 },
+  { y: 24, autoAlpha: 0 },
+  { y: 0, autoAlpha: 1, duration: 0.45, ease: "power2.out", stagger: 0.12 },
   0.4);
 ```
 
@@ -105,8 +107,8 @@ Reveal headline word-by-word for emphasis. Wrap each word in a `<span class="wor
 
 ```js
 tl.fromTo(".word",
-  { y: 12, opacity: 0 },
-  { y: 0, opacity: 1, duration: 0.35, ease: "power2.out", stagger: 0.06 },
+  { y: 12, autoAlpha: 0 },
+  { y: 0, autoAlpha: 1, duration: 0.35, ease: "power2.out", stagger: 0.06 },
   0.2);
 ```
 
