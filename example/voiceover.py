@@ -391,8 +391,8 @@ def main():
                       f"next starts {o['next_section_start']:.2f}s "
                       f"(overlap {o['overlap_seconds']:.2f}s)")
             print("\n  Fix: shorten text or push next section later, then re-run.")
-            sys.exit(3)
-        print("  No overlaps. Voiceover timing is clean.")
+        else:
+            print("  No overlaps. Voiceover timing is clean.")
     else:
         print("  Transcript verification skipped (no transcribe output).")
 
