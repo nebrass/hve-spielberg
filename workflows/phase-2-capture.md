@@ -27,6 +27,26 @@ A scene's `Capture:` value selects a source; each is feature-detected and degrad
 
 Stills remain the universal fallback — a missing source never blocks Phase 2.
 
+### Recording a web scene (screencast)
+
+When `Capture: screencast` and screencast is available (see detection above):
+
+1. Size the viewport to the composition canvas: `mcp__chrome-devtools__resize_page`
+   to the Phase-1 dimensions (e.g. 1920×1080) so the recording matches render size.
+2. Navigate to the scene's view and let it settle (`navigate_page` + `wait_for`).
+3. `mcp__chrome-devtools__screencast_start` with `filePath: "public/clips/scene-{NN}-{slug}.mp4"`.
+4. Drive the scripted interaction with the existing input tools (`click`, `wait_for`,
+   `evaluate_script` for scroll). Keep the meaningful action **one continuous take** —
+   never cut mid-action.
+5. `mcp__chrome-devtools__screencast_stop`. Keep the clip short (≤ ~8s) unless it's a
+   deliberate real-time beat (e.g. a live process); over-long clips bloat render + repo.
+6. Verify the file exists and is non-empty (`ffprobe` duration > 0). If screencast was
+   unavailable or the file is empty, fall back to `take_screenshot` for this scene and
+   record `Capture: screenshot` in the storyboard.
+
+The recorded `public/clips/scene-{NN}-{slug}.mp4` is consumed by the Layer-A clip-scene
+archetype (`templates/scene-clip.html`) in Phase 3 — no extra wiring here.
+
 ## Step 2.1: Get App URL
 
 ```json
