@@ -1,7 +1,7 @@
 # Storyboard — {project-name}
 
 **Duration:** {total}s | **Canvas:** {width}×{height} ({aspect}) | **Renderer:** HyperFrames
-**Mode:** {promo | showcase} | **Theme:** {light | dark}
+**Mode:** {promo | showcase | tutorial} | **Theme:** {light | dark}
 
 All times are in **seconds**. Each scene below maps 1:1 to a HyperFrames sub-composition under `scenes/`. The Phase 4 root `index.html` references them via `data-composition-src`.
 
