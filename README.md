@@ -8,7 +8,16 @@
 
 ## Demo
 
-**[▶ Watch the 60-second promo →](example/out/final.mp4)**
+**[▶ Watch the 60-second promo →](https://github.com/nebrass/hve-spielberg/releases/latest)** *(published as a release asset — the 3.4 MB MP4 is not committed to the repo)*
+
+<!--
+  For an INLINE player instead of a download link: open a GitHub Release (or any
+  issue/PR comment), drag example's out/final.mp4 into the text box, and GitHub
+  returns a https://github.com/nebrass/hve-spielberg/assets/... URL that renders
+  as a <video> player. Replace the link above with that URL.
+  Regenerate the MP4 anytime: see example/README.md § "Reproducing the render".
+-->
+
 
 The promo above was built by hve-spielberg itself, end-to-end, using only what ships in this repo:
 
@@ -216,7 +225,7 @@ hve-spielberg/
 ├── scripts/
 │   └── generate_voiceover.py      # ElevenLabs TTS + transcript verification + auto-pad
 ├── example/                       # The skill's own promo, built by the skill itself
-│   ├── out/final.mp4              # 60s rendered demo (1920×1080, 3.4 MB)
+│   ├── (out/final.mp4)           # 60s rendered demo (1920×1080, 3.4 MB) — published as a GitHub Release asset, not committed
 │   ├── voiceover.py               # Project-local script with the actual VO timing config
 │   ├── index.html                 # Phase 4 root composition
 │   ├── scenes/*.html              # Phase 3 scene templates

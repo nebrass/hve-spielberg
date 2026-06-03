@@ -2,9 +2,9 @@
 
 This is **hve-spielberg's own promo video**, built by the pipeline it promotes.
 
-▶ **`out/final.mp4`** — 60s, 1920×1080, H.264 + AAC stereo, ~3.4 MB.
+▶ **`out/final.mp4`** — 60s, 1920×1080, H.264 + AAC stereo, ~3.4 MB. Published as a [GitHub Release asset](https://github.com/nebrass/hve-spielberg/releases/latest) (not committed — it's regenerable binary), or rebuild it locally with the steps below.
 
-The video and every input artifact live in this directory. It's the project's primary demo, not a staged sample.
+Every *input* artifact lives in this directory — it's the project's primary demo, not a staged sample. The rendered video is the one thing that isn't committed.
 
 ## What's here
 
@@ -24,10 +24,10 @@ The video and every input artifact live in this directory. It's the project's pr
 | `voiceover.mp3` | 5 | Generated 60s voiceover (5 sections with silence padding) — gitignored, regenerable |
 | `background-music.mp3` | 5 | "Unpretentious Reveal" by SondreDrakensson (Freesound, CC-BY) — gitignored, fetch via Step 5.2 |
 | `voiceover-with-music.mp3` | 5 | ffmpeg-mixed final audio with loudnorm + amix + alimiter — gitignored, regenerable |
-| `out/final.mp4` | 5 | **The rendered video.** `npx hyperframes render` output (committed). |
+| `out/final.mp4` | 5 | **The rendered video.** `npx hyperframes render` output — published as a GitHub Release asset, not committed (regenerate with the steps below). |
 | `CREDITS.md` | — | CC-BY attribution for the music track + voiceover provenance |
 
-Only `out/final.mp4` and the source files (`.html`, `.md`, `.py`) are committed. The intermediate audio files (`voiceover.mp3`, `background-music.mp3`, `voiceover-with-music.mp3`, `vo_section_*.mp3`, `transcript.json`) are regenerable and `.gitignore`'d — see `example/.gitignore`.
+Only the source files (`.html`, `.md`, `.py`) are committed. The rendered `out/final.mp4` is published as a GitHub Release asset (not version-controlled — 3.4 MB of regenerable binary), and the intermediate audio files (`voiceover.mp3`, `background-music.mp3`, `voiceover-with-music.mp3`, `vo_section_*.mp3`, `transcript.json`) are regenerable and `.gitignore`'d — see `example/.gitignore`.
 
 ## Reproducing the render
 
