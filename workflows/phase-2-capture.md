@@ -47,6 +47,23 @@ When `Capture: screencast` and screencast is available (see detection above):
 The recorded `public/clips/scene-{NN}-{slug}.mp4` is consumed by the Layer-A clip-scene
 archetype (`templates/scene-clip.html`) in Phase 3 — no extra wiring here.
 
+### Recording a CLI scene (terminal)
+
+CLI tools cannot be screencast (no DOM page). Two paths:
+
+**Default — authored terminal scene (deterministic, no dependency):**
+1. Run the real command and capture its stdout (a Bash run, trimmed to the salient lines).
+2. Author a scene from `templates/scene-terminal.html` into `scenes/{NN}-terminal.html`,
+   replacing `CMD` with the real command and the `.oline` rows with the real output.
+3. This is an authored **scene** (not a clip) — it composes like any Phase-3 scene; no
+   `public/clips/` file is produced. It is deterministic and on-brand.
+
+**Optional — true real-time terminal recording (`asciinema` + `agg`, feature-detected):**
+1. Only if both are on PATH (see detection): `asciinema rec --command "<cmd>" cast.cast`.
+2. `agg cast.cast public/clips/scene-{NN}-{slug}.mp4` (render the cast to video).
+3. Compose as a clip via the Layer-A `templates/scene-clip.html` archetype.
+If either tool is missing, use the default authored-terminal path instead.
+
 ## Step 2.1: Get App URL
 
 ```json
