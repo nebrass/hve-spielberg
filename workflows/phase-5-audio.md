@@ -55,6 +55,16 @@ When a section overruns budget, **drop commas before dropping words**. Restructu
 
 Each comma you remove saves ~0.3–0.5s. A 5-comma rewrite can reclaim 2+ seconds without cutting meaning.
 
+### Clip scenes and VO timing
+
+For clip scenes the scene window is footage-derived (Phase 4), not VO-derived.
+Write that scene's VO to fit the existing window (start ~1s in, end ≥0.5s before
+the window ends) exactly as for any scene — do not stretch the clip. Captions for
+footage use the existing Whisper VO transcript (`auto`). **Clip-own audio is OFF in
+v1**: clips stay muted and only `voiceover-with-music.mp3` plays; enabling a clip's
+own sound needs a future Phase-5 mixing sub-step (duck VO under clip audio,
+loudness-normalize, confirm the mix reaches `out/final.mp4`) and is out of v1 scope.
+
 ### Generate with ElevenLabs (default, higher quality)
 
 Copy the canonical script into the project first, then edit the **project-local
