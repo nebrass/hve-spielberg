@@ -138,6 +138,20 @@ Show each screenshot with its scene number. Ask:
 }
 ```
 
+### Footage quality gate
+
+Before accepting any recorded clip, check (retake if it fails):
+
+- **Resolution** matches the composition canvas; **fps ≥ 30**.
+- **No dev artifacts** in frame: browser notifications, autofill dropdowns, devtools/console
+  overlays, extension badges, or personal data (emails, tokens, real names).
+- **The meaningful action is one clean, uninterrupted take** (no mid-action cut, no stray
+  cursor jitter, no accidental clicks).
+- **Duration** within the scene's planned slot (Phase 4 will footage-lock it).
+
+In the Phase-2 gallery review, present each clip and prompt the user to **accept or retake**.
+A rejected clip falls back to a screenshot or a re-record.
+
 ## Capture Tips
 
 - **Wait for animations** — Use `wait_for` to ensure page is fully loaded before capturing
