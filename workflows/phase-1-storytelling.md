@@ -205,6 +205,17 @@ For each scene, define:
 
 Generate `storyboard.md` from `templates/storyboard.md`.
 
+### Capture type per scene (optional)
+
+Each scene defaults to a still **screenshot**. A scene may instead be a **clip**
+(real motion footage) by setting `Capture:` to `screencast` (web app, Phase 2),
+`terminal` (CLI tool — an authored animated terminal from real command output),
+or `supplied` (you provide the file). Clip scenes use the clip fields in the
+storyboard template (`Clip`, `Clip in/out`, `Speed`, `Captions`). A clip scene's
+on-screen duration is the footage length (see Phase 4), so plan the scene's slot
+around the real clip length. Clips are available in **all** content modes; in
+`promo` they must be device-framed accents (Phase 4).
+
 ## Step 1.7: Which App Views to Capture
 
 Based on the storyboard, list the specific app URLs/routes/views that need to be captured in Phase 2. For each scene that shows the app, define:
