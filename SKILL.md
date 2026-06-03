@@ -97,6 +97,10 @@ Phase 2 requires: context.md + storyboard.md
 Phase 3 requires: capture artifacts in public/screenshots/ and/or public/clips/ (unless skipped, e.g. no real product)
 Phase 4 requires: context.md + storyboard.md + DESIGN.md + scenes/*.html
 Phase 5 requires: index.html (root composition); Phase 5 then runs `npx hyperframes lint|inspect|validate` before render
+Tutorial content mode: PREFERS public/clips/ but does not require them. Jumping into a
+tutorial with no clips WARNS ("tutorial requested but no clips found — degrading to stills")
+and continues with stills; it does NOT block. Missing captions in tutorial mode is the
+stricter check (see Phase 5). (warn-don't-block; spec §7.3)
 ```
 
 ---

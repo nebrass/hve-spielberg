@@ -33,6 +33,7 @@ SKILL.md (orchestrator)
 - Phase 3 needs capture artifacts (`public/screenshots/` and/or `public/clips/`)
 - Phase 4 needs context + storyboard + `DESIGN.md` + `scenes/*.html`
 - Phase 5 needs `index.html` (root composition) and passing `npx hyperframes lint|inspect|validate`
+- Tutorial content mode prefers `public/clips/` but degrades to stills with a warning when clips are absent (warn-don't-block, spec §7.3); only missing captions is a hard check in tutorial mode
 
 **External dependencies the skill calls out to:**
 
