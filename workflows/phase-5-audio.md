@@ -139,6 +139,25 @@ Compare timestamps against scene timings. If ANY overlap detected:
 
 **Repeat until ZERO overlaps. Do NOT ask the user — just fix it.**
 
+### Captions (REQUIRED in tutorial mode)
+
+If the content-mode is `tutorial`, on-screen VO captions are **mandatory on every footage
+segment** (spec §7.2) and this **intentionally overrides** the default-optional policy in
+`patterns/INDEX.md`. Silence-only segments (no VO words in the window) are exempt; in
+promo/showcase captions stay optional.
+
+Captions are a HyperFrames caption sub-comp synced to `transcript.json` — see
+`references/captions.md` (GROUPS mechanism) and the Phase-3 caption-track recipe. Each
+footage scene whose storyboard `Captions:` is `auto` must carry a caption track wired over
+its window in `index.html`.
+
+Orchestrator enforcement before render (tutorial mode) — do not advance until all hold:
+1. `transcript.json` exists and passed the timing check.
+2. Every footage scene with VO has a caption track (per the storyboard `Captions: auto` field).
+3. Each caption group has a hard `tl.set(... {opacity:0, visibility:"hidden"}, group.end)` kill
+   (the `references/captions.md` `[caption-lint]` self-check logs warnings otherwise).
+There is no programmatic gate; a true build-time rule would be upstream `hyperframes` lint work (spec §14).
+
 ### Pad voiceover to VIDEO_DURATION
 
 The voiceover audio must match the composition's total duration exactly. If it's shorter, HyperFrames render finds no audio for trailing frames and may truncate. Pad with `apad`. Use the same `VIDEO_DURATION` the composition uses (from `project-plan.md`); the literal `60` below is just an example for a 60s spot — replace it with your project's duration:
