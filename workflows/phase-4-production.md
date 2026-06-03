@@ -184,6 +184,22 @@ Use the `hyperframes` skill for the composition authoring rules — the most imp
 - Visual clips share track index 1 or higher; audio uses track 0; transitions sit on a separate high track (e.g. 9) only to avoid same-track overlap — paint order is controlled by CSS `z-index` (and DOM order when `z-index` is equal), NOT by the track index (see the CRITICAL invariant above and `patterns/metallic-swoosh.md`).
 - Layout the resting state first; add motion only after `npx hyperframes inspect` reports zero overlaps at any sampled timestamp.
 
+### Clip scenes (footage timing)
+
+- A clip scene's root-loader `data-duration` = the clip's on-screen length =
+  `(out − in) / speed` (from the storyboard `Clip in/out` + `Speed`). Set the
+  scene window from the footage — do **not** stretch a clip scene to fit VO; VO
+  is written to fit the footage-derived window in Phase 5.
+- A rigid real-time clip (e.g. a live command run) sets its own budget: keep it at
+  `Speed: 1.0` and size the scene to the real length; speed-ramp **only** explicitly
+  marked dead air.
+- Overlays on a clip scene (captions, punch-in zoom, cursor emphasis) are keyed to
+  **footage timecodes**; if `Speed` ≠ 1, remap those keys proportionally.
+- **Promo framing check (orchestrator-enforced):** when `Mode: promo`, every clip
+  scene MUST use the device-frame wrapper — bare-edge footage is not allowed in
+  promo. Verify by eye in `npx hyperframes inspect` before advancing. (There is no
+  programmatic gate; see spec §5.5/§14.)
+
 ## Step 4.5: Wire Transitions
 
 Default to a quiet crossfade. Use `patterns/metallic-swoosh.md` only at major narrative beats (≤2 per video in a 30–60s spot). Transition timing rules:
