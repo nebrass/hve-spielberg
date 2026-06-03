@@ -1,0 +1,31 @@
+<!-- Clip scene archetype (HyperFrames sub-composition). Wiring S: a plain
+     <video> is auto-discovered and currentTime-synced to this scene's window
+     (set by the root loader's data-start/data-duration). Animate the wrapper,
+     NEVER the <video> dimensions. Clip-own audio is OFF in v1 (muted). -->
+<template id="scene-NN-clip-template">
+  <div data-composition-id="scene-NN-clip" data-width="1920" data-height="1080">
+    <div class="clip-frame">
+      <video class="clip-vid" src="public/clips/scene-NN-slug.mp4" muted playsinline></video>
+    </div>
+    <style>
+      [data-composition-id="scene-NN-clip"]{position:absolute;inset:0;display:flex;
+        align-items:center;justify-content:center;background:#0a0a0a /* brand canvas */}
+      [data-composition-id="scene-NN-clip"] .clip-frame{position:relative;width:78%;
+        border-radius:14px;overflow:hidden;box-shadow:0 40px 120px rgba(0,0,0,.45);
+        outline:1px solid rgba(255,255,255,.06);visibility:hidden;opacity:0}
+      [data-composition-id="scene-NN-clip"] .clip-vid{display:block;width:100%;height:auto}
+      /* device-frame chrome, brand color-grade, vignette, restyled cursor go here */
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      // Entrance: animate the WRAPPER only (autoAlpha + fromTo per the stagger-trap rule).
+      tl.fromTo('[data-composition-id="scene-NN-clip"] .clip-frame',
+        { y: 40, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.6, ease: "power3.out" }, 0.1);
+      // Optional punch-in zoom keyed to FOOTAGE time:
+      // tl.to('[data-composition-id="scene-NN-clip"] .clip-frame', { scale: 1.15, ... }, <t>)
+      window.__timelines["scene-NN-clip"] = tl;
+    </script>
+  </div>
+</template>
