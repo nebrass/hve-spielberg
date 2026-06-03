@@ -11,6 +11,22 @@ terminal path for CLI) are wired in **Layer B**; in Layer A, clip scenes consume
 a `public/clips/scene-{NN}-{slug}.mp4` produced by any source (including a
 user-supplied file). Stills remain the default and the fallback.
 
+### Capture-source detection (graceful, never hard-fail)
+
+A scene's `Capture:` value selects a source; each is feature-detected and degrades cleanly:
+
+- `screencast` (web): usable only if the chrome-devtools MCP exposes `screencast_start`
+  AND the server was started with `--experimentalScreencast=true`. Detect by attempting
+  it; if the tool is absent or it errors about the flag, **fall back to `take_screenshot`**,
+  set the scene's `Capture: screenshot`, and tell the user how to enable it:
+  restart the chrome-devtools MCP server with `--experimentalScreencast=true`.
+- `terminal` (CLI): the default path is dependency-free (author a terminal scene from real
+  output, see "Recording a CLI scene"). The optional `asciinema`→video path is used only if
+  `asciinema` and `agg` are on PATH; otherwise use the default authored-scene path.
+- `supplied`: the user provides `public/clips/scene-{NN}-{slug}.mp4` directly.
+
+Stills remain the universal fallback — a missing source never blocks Phase 2.
+
 ## Step 2.1: Get App URL
 
 ```json
