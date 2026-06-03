@@ -156,6 +156,18 @@ Screenshot with rounded corners + large soft shadow. Float in from below (`y: 60
 ### Device Frame
 Wrap the `<img>` in a device frame `<div>` (laptop or phone). Frame is static — the screenshot **inside** can pan or scroll via a child wrapper translated by GSAP.
 
+### Footage Legibility Punch-In
+
+When narrative-critical UI text in recorded footage renders below ~24px in the final frame,
+push in on it: animate the **non-timed `.clip-frame` wrapper**'s `scale` (with `transformOrigin`
+at the focal region) — **never** the `<video>`/`<img>` dimensions (see the DON'T below). Key it to
+**footage time** (seconds into the clip); if the clip's `Speed` ≠ 1, remap the times proportionally.
+**Release the zoom before the scene's crossfade window** so it never pulls back mid-transition.
+
+Effective size: `effective_px = source_px × scale × (rendered_frame_width / source_capture_width)`.
+Pick `scale` so the smallest narrative-critical glyph clears 24px. Verify by eye with
+`npx hyperframes inspect . --at <focal-t>`.
+
 ## Transition Ideas
 
 Scene-to-scene transitions are authored at the **composition level**, not inside a scene. HyperFrames supports CSS transitions for most cases and shader transitions for cinematic moments.

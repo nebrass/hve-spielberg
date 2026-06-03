@@ -23,8 +23,13 @@
       // Entrance: animate the WRAPPER only (autoAlpha + fromTo per the stagger-trap rule).
       tl.fromTo('[data-composition-id="scene-NN-clip"] .clip-frame',
         { y: 40, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.6, ease: "power3.out" }, 0.1);
-      // Optional punch-in zoom keyed to FOOTAGE time:
-      // tl.to('[data-composition-id="scene-NN-clip"] .clip-frame', { scale: 1.15, ... }, <t>)
+      // Legibility punch-in (spec §7.2a): when narrative-critical UI text renders <24px
+      // effective, scale the NON-TIMED .clip-frame wrapper toward the text region (never the
+      // <video>). Keyed to FOOTAGE time t; if Speed != 1, remap t. Release BEFORE the
+      // inter-scene crossfade so it never pulls back mid-transition.
+      // effective_px = source_px * scale * (rendered_frame_width / source_capture_width)
+      // tl.to('[data-composition-id="scene-NN-clip"] .clip-frame', { scale: 2.0, transformOrigin: "18% 12%", duration: 0.6, ease: "power2.inOut" }, 3.0);
+      // tl.to('[data-composition-id="scene-NN-clip"] .clip-frame', { scale: 1.0, transformOrigin: "18% 12%", duration: 0.6, ease: "power2.inOut" }, 6.0);
       window.__timelines["scene-NN-clip"] = tl;
     </script>
   </div>

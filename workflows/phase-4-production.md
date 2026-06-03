@@ -199,6 +199,7 @@ Use the `hyperframes` skill for the composition authoring rules — the most imp
   scene MUST use the device-frame wrapper — bare-edge footage is not allowed in
   promo. Verify by eye in `npx hyperframes inspect` before advancing. (There is no
   programmatic gate; see spec §5.5/§14.)
+- **Legibility check (orchestrator-enforced, spec §7.2a):** narrative-critical UI text in footage must read ≥24px effective in the rendered frame. If raw capture is below that, add a footage-time punch-in on the `.clip-frame` wrapper (see `patterns/visual-patterns.md` § Footage Legibility Punch-In). Verify by eye in `npx hyperframes inspect . --at <focal-t>`; there is no programmatic gate.
 
 ## Step 4.5: Wire Transitions
 
