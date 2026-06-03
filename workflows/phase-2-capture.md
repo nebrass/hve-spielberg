@@ -1,6 +1,15 @@
 # Phase 2: Capture (Chrome DevTools)
 
-Automatically capture app/website screenshots for use in video scenes.
+Automatically capture **artifacts** (still screenshots and/or recorded clips) for use in video scenes.
+
+## Capture artifacts: stills and clips
+
+Phase 2 produces **capture artifacts**: still screenshots in `public/screenshots/`
+and/or recorded clips in `public/clips/`. A scene's `Capture:` field (from the
+storyboard) decides which. Recording sources (Chrome screencast for web, the
+terminal path for CLI) are wired in **Layer B**; in Layer A, clip scenes consume
+a `public/clips/scene-{NN}-{slug}.mp4` produced by any source (including a
+user-supplied file). Stills remain the default and the fallback.
 
 ## Step 2.1: Get App URL
 
