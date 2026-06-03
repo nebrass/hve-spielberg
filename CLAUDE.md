@@ -39,6 +39,7 @@ SKILL.md (orchestrator)
 - The `hyperframes` skill for HTML/GSAP authoring rules (Phases 3 + 4)
 - The `gsap` skill (optional companion) for choreography reference
 - `npx hyperframes` CLI for `init`, `add` (pull catalog blocks, Phase 4), `lint`, `preview`, `inspect`, `validate`, `render`, `doctor` (render-environment diagnostics, Phase 5), `transcribe` (preferred voiceover-timing verifier in Phase 5; falls back to standalone Whisper if unavailable), and `tts` (used in Phase 5 as the no-API-key fallback when `ELEVENLABS_API_KEY` is unset)
+- `mcp__chrome-devtools__screencast_*` + `resize_page` for Phase-2 web-clip capture (experimental, feature-detected — needs `--experimentalScreencast=true`; falls back to screenshots), and optional `asciinema`+`agg` for CLI clip recording (otherwise the authored-terminal path)
 - `scripts/generate_voiceover.py` → ElevenLabs API + optional Whisper transcription (Phase 5)
 - `scripts/search_music.py` → Freesound API for CC music (Phase 5)
 

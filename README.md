@@ -77,6 +77,8 @@ Each phase has a user-approval checkpoint before proceeding to the next.
 | `FREESOUND_API_KEY` | No | [freesound.org/apiv2/apply](https://freesound.org/apiv2/apply/) — enables CC music search |
 | Whisper | Recommended | `pip install openai-whisper` — voiceover timing verification |
 | `espeak-ng` | Optional | `brew install espeak-ng` / `apt install espeak-ng` — only needed for non-English voiceover via `hyperframes tts` fallback |
+| `--experimentalScreencast` (chrome-devtools MCP) | No | Enables `screencast` web-clip capture; without it, web scenes fall back to screenshots. |
+| `asciinema` + `agg` | No | Optional true terminal-clip recording for CLI scenes; without them, CLI scenes use the authored-terminal path. |
 
 ### Required Skills
 
