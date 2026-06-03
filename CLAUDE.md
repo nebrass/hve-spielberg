@@ -30,7 +30,7 @@ SKILL.md (orchestrator)
 **Phase prerequisites are enforced in `jump` mode** — see `SKILL.md`. When editing workflows, preserve the file-presence contract:
 - Phase 1 needs `context.md`
 - Phase 2 needs `context.md` + `storyboard.md`
-- Phase 3 needs `public/screenshots/`
+- Phase 3 needs capture artifacts (`public/screenshots/` and/or `public/clips/`)
 - Phase 4 needs context + storyboard + `DESIGN.md` + `scenes/*.html`
 - Phase 5 needs `index.html` (root composition) and passing `npx hyperframes lint|inspect|validate`
 
