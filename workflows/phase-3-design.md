@@ -162,6 +162,28 @@ drop shadow, a vignette toward the brand canvas, a hidden OS cursor replaced by 
 pointer with a click pulse, and a color-grade toward the active design system's tokens. Clip-own
 audio is OFF in v1 (the `<video>` stays muted; the baked voiceover track carries sound).
 
+### Caption track for footage scenes (tutorial mode)
+
+When content-mode is `tutorial`, author one caption sub-comp per footage scene from the
+Phase-5 `transcript.json` (word-level), then wire it over the scene window in Phase 4.
+Mechanism per `references/captions.md` — invoke `Skill(hyperframes)` and read it. Skeleton
+(deterministic, fully seekable — no `Math.random()`/`Date.now()`):
+
+```js
+// GROUPS: [{text,start,end}] from transcript.json (3–5 words/group; break on sentence
+// boundaries or 150ms+ pauses). One group visible at a time; cg-<i> element IDs.
+GROUPS.forEach(function (g, gi) {
+  var el = document.getElementById("cg-" + gi);
+  tl.fromTo(el, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.18, ease: "power2.out" }, g.start);
+  tl.to(el, { opacity: 0, duration: 0.12, ease: "power2.in" }, g.end - 0.12);
+  tl.set(el, { opacity: 0, visibility: "hidden" }, g.end);   // deterministic hard kill
+});
+```
+
+Positioning (per `captions.md`): bottom 80–120px, `position:absolute; overflow:visible`,
+full-width centered container (NOT `left:50%;translateX(-50%)`). Text ≥24px, high contrast.
+Run the `[caption-lint]` self-check before `window.__timelines[id] = tl`.
+
 ## Step 3.3: Author Scenes (preview + gates run in Phase 4)
 
 Build each scene template to match `DESIGN.md`. A scene file is a `<template>`-wrapped sub-composition: it can't be previewed standalone (the HyperFrames runtime clones and drives it), and the CLI gates take a project **directory** that resolves `index.html` — which doesn't exist until Phase 4. So per-scene preview and the mechanical gates run in Phase 4, after `index.html` references the scenes:
