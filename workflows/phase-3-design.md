@@ -88,6 +88,7 @@ Request these scene archetypes (adapt to mode — promo or showcase):
 | `scenes/03-stat.html` | Animated counter + label, used for proof points |
 | `scenes/04-cta.html` | Call to action: headline, button, URL, brand sign-off |
 | `scenes/NN-clip.html` | Real footage clip framed in a device/browser frame with overlays |
+| `scenes/NN-recap.html` | **Tutorial-mode only** — chapter-summary recap beat (~90s segment cap) |
 
 Each scene template must:
 
