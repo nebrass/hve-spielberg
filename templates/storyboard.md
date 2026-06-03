@@ -18,6 +18,12 @@ All times are in **seconds**. Each scene below maps 1:1 to a HyperFrames sub-com
 **Window:** {start}s → {end}s ({duration}s)
 **Scene file:** `scenes/{NN}-{slug}.html`
 **Screenshot:** `public/screenshots/scene-{NN}-{desc}.png` *(omit if pure design scene)*
+**Capture:** screenshot | screencast | terminal | supplied   *(default: screenshot)*
+**Clip:** `public/clips/scene-{NN}-{slug}.mp4`                *(present when Capture yields a clip)*
+**Clip in/out:** {in}s–{out}s                                *(trim into the source; default: whole clip)*
+**Speed:** 1.0                                               *(defaultPlaybackRate; >1 only over dead air)*
+**Clip audio:** none                                         *(v1: clips are muted — field reserved, see spec §5.1)*
+**Captions:** auto                                           *(auto = Whisper on the VO)*
 
 **Visual:**
 - Text on screen: "{headline}"
