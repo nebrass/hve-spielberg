@@ -160,6 +160,23 @@ Scene 3: HIGHLIGHTS (35-50s) — Design details, UX choices, tech stack
 Scene 4: CLOSER (50-60s)    — Key takeaway + links/contact
 ```
 
+### Tutorial Mode Structure
+```
+Scene 0: COLD OPEN (0-6s)   — Show the finished payoff FIRST (the end result the viewer will achieve)
+Scene 1: STEP 1 (6-Xs)      — Chapter "Step 1 of M" — one concrete goal; clip when capture is available
+Scene 2: STEP 2 (...)       — Chapter "Step 2 of M" — next goal in task order
+Scene N: STEP M (...)       — Chapter "Step M of M" — final goal; lands back on the payoff
+Scene N+1: RECAP / NEXT     — Summarize the steps + where to go next (docs, install, repo)
+```
+
+Chapters are **task-ordered**: each scene is one step with a single concrete goal, labeled
+on-screen "Step N of M" (from the storyboard `Step:`/`Chapter:` fields — see Phase 3/4).
+**Cold-open on the payoff** (spec §7.2d): scene 0 is a ~2–4s teaser of the finished end-state
+so the viewer knows what they're building toward. Tutorial mode **prefers clip scenes**
+(`Capture: screencast`/`terminal`) but does **not require** them — without capture, steps fall
+back to stills and the step labels + captions carry the narrative (spec §7.3). Break any
+continuous run >~90s with an authored recap beat (Phase 4) before the next step.
+
 Adjust durations based on selected total length.
 
 ## Step 1.5: Transition Selection
