@@ -36,3 +36,7 @@ __pycache__/
 
 # Throwaway render/verify harness — never committed
 test/
+
+# Recorded clip footage is never committed (externalize as a release asset)
+public/clips/
+*.webm

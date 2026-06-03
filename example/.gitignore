@@ -13,3 +13,7 @@ voiceover.srt
 voiceover.txt
 voiceover.tsv
 voiceover.vtt
+
+# Clip footage (if the example ever demos a clip scene) — externalized, not committed
+public/clips/
+*.webm
