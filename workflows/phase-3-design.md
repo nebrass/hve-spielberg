@@ -87,6 +87,7 @@ Request these scene archetypes (adapt to mode — promo or showcase):
 | `scenes/02-feature.html` | Browser mockup + title + supporting copy |
 | `scenes/03-stat.html` | Animated counter + label, used for proof points |
 | `scenes/04-cta.html` | Call to action: headline, button, URL, brand sign-off |
+| `scenes/NN-clip.html` | Real footage clip framed in a device/browser frame with overlays |
 
 Each scene template must:
 
@@ -147,6 +148,19 @@ Animation pattern reference: `patterns/visual-patterns.md`.
 Transition pattern reference (when an archetype owns its own outgoing flourish): `patterns/metallic-swoosh.md`.
 
 **Before authoring a scene from scratch**, check the HyperFrames catalog — blocks like `app-showcase`, `ui-3d-reveal`, `data-chart`, `logo-outro`, and `reddit-post` are drop-in sub-compositions that cover most product-video archetypes. See Phase 4 Step 4.2 for the `npx hyperframes add <name>` workflow. Pulling a catalog block is almost always faster than hand-authoring an equivalent scene.
+
+### Clip scene (real footage)
+
+A clip scene is a normal sub-composition containing a **plain** `<video muted playsinline>`
+(Wiring S — render-verified). The runtime auto-discovers and frame-syncs the video to the
+scene's window; **do not** put `data-start`/`data-duration`/`data-track-index` on the `<video>`,
+and **never animate the `<video>` dimensions** — wrap it in a non-timed `.clip-frame` div and
+animate the wrapper. Copy `templates/scene-clip.html` as the starting point.
+
+**Mandatory brand treatments** (so footage reads premium, not raw): device/browser frame +
+drop shadow, a vignette toward the brand canvas, a hidden OS cursor replaced by a brand-styled
+pointer with a click pulse, and a color-grade toward the active design system's tokens. Clip-own
+audio is OFF in v1 (the `<video>` stays muted; the baked voiceover track carries sound).
 
 ## Step 3.3: Author Scenes (preview + gates run in Phase 4)
 
