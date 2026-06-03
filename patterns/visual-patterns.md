@@ -19,7 +19,7 @@ Avoid `elastic` and `bounce` in product videos — they read as toy-like.
 
 ## Entrance Tweens
 
-Author every entrance with `gsap.from()` — describe where the element comes **from**; its CSS resting state is the destination.
+Author every entrance with `tl.fromTo()` — give the explicit **from**-state (an offset, `opacity: 0`) and the rest state as the **to**-state. (Avoid bare `tl.from()` on opacity-bearing elements — see the stagger trap below.)
 
 ```html
 <h1 id="hero" style="opacity:0">Your headline</h1>
@@ -148,7 +148,7 @@ Pure CSS — no GSAP needed for the tilt itself.
 </style>
 ```
 
-Animate the mockup's entrance with `gsap.from()` — `y`, `opacity`, `scale`. Keep the perspective static; animating perspective values is jittery.
+Animate the mockup's entrance with `tl.fromTo()` — `y`, `opacity`, `scale`. Keep the perspective static; animating perspective values is jittery.
 
 ### Floating Card
 Screenshot with rounded corners + large soft shadow. Float in from below (`y: 60, opacity: 0, ease: "expo.out", duration: 0.9`).

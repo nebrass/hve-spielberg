@@ -27,7 +27,7 @@ All times are in **seconds**. Each scene below maps 1:1 to a HyperFrames sub-com
 > "{exact text to speak}"
 
 **Animation (GSAP):**
-- Entry: {e.g. "Headline `tl.from('#headline', { y: 40, opacity: 0, duration: 0.6, ease: 'power3.out' }, 0.2)`; subtitle staggered 0.15s later"}
+- Entry: {e.g. "Headline `tl.fromTo('#headline', { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: 'power3.out' }, 0.2)`; subtitle staggered 0.15s later. Always use `fromTo()` for opacity tweens — bare `tl.from()` on an `opacity:0` rest state flashes-then-disappears under stagger (see `patterns/visual-patterns.md`)."}
 - During: {e.g. "Stat counter tweens 0 → 12,500 over 2.2s with `power1.out`"}
 - Exit: *handled by the inter-scene transition — do not animate this scene out*
 

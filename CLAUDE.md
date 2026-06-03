@@ -38,7 +38,7 @@ SKILL.md (orchestrator)
 - `mcp__chrome-devtools__*` for app capture (Phase 2)
 - The `hyperframes` skill for HTML/GSAP authoring rules (Phases 3 + 4)
 - The `gsap` skill (optional companion) for choreography reference
-- `npx hyperframes` CLI for `init`, `lint`, `preview`, `inspect`, `validate`, `render`, `transcribe` (preferred voiceover-timing verifier in Phase 5; falls back to standalone Whisper if unavailable), and `tts` (used in Phase 5 as the no-API-key fallback when `ELEVENLABS_API_KEY` is unset)
+- `npx hyperframes` CLI for `init`, `add` (pull catalog blocks, Phase 4), `lint`, `preview`, `inspect`, `validate`, `render`, `doctor` (render-environment diagnostics, Phase 5), `transcribe` (preferred voiceover-timing verifier in Phase 5; falls back to standalone Whisper if unavailable), and `tts` (used in Phase 5 as the no-API-key fallback when `ELEVENLABS_API_KEY` is unset)
 - `scripts/generate_voiceover.py` → ElevenLabs API + optional Whisper transcription (Phase 5)
 - `scripts/search_music.py` → Freesound API for CC music (Phase 5)
 
@@ -52,8 +52,8 @@ The Python scripts run inside generated video projects, not from this repo. They
 # Voiceover generation (from inside a generated project)
 ELEVENLABS_API_KEY=... python3 scripts/generate_voiceover.py
 
-# Music search (from inside a generated project)
-FREESOUND_API_KEY=... python3 scripts/search_music.py
+# Music search (from inside a generated project) — query is a required argument
+FREESOUND_API_KEY=... python3 scripts/search_music.py "cinematic corporate uplifting"
 ```
 
 Both `ELEVENLABS_API_KEY` and `ELEVEN_LABS_API_KEY` are accepted (back-compat).
@@ -69,6 +69,7 @@ These are enforced verbally in the `## DON'Ts` section of `SKILL.md`. If you mod
 - **No exit animations except on the closing scene.** The inter-scene transition owns the exit.
 - **Never animate `display`, `visibility`, or call `.play()` inside a timeline.** Breaks HyperFrames' deterministic seek; use `opacity` + `pointer-events`.
 - **Never animate `<img>` dimensions directly.** Wrap the `<img>` in a non-timed `<div>` and animate the wrapper's `transform`. Direct dimension tweens trigger layout recompute that breaks deterministic seek.
+- **Never use `tl.from()` for opacity tweens.** GSAP records the end-state at registration; if the CSS rest is `opacity:0` the recorded end is `opacity:0` (the tween goes nowhere), and under stagger later instances re-hide elements earlier ones revealed. Always use `tl.fromTo(target, {opacity:0,...}, {opacity:1,...}, pos)`.
 
 ## Common edits
 

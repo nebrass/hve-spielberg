@@ -17,7 +17,7 @@ The promo above was built by hve-spielberg itself, end-to-end, using only what s
 - Phase 5 ElevenLabs voiceover (Matilda) + Freesound music (CC-BY) + ffmpeg mix
 - `npx hyperframes render` → MP4 at 1920×1080, 30fps
 
-Everything in [`example/`](example/) is the actual artifact — not a staged mock-up. Run [`example/voiceover.py`](example/voiceover.py) and `npx hyperframes render` yourself to reproduce.
+Everything in [`example/`](example/) is the actual artifact — not a staged mock-up. To reproduce: run [`example/voiceover.py`](example/voiceover.py), then the normalize + music-mix ffmpeg steps in [`example/README.md`](example/README.md) to produce `voiceover-with-music.mp3` (the file `index.html` references — render is silent without it), then `npx hyperframes render`.
 
 ## What It Does
 
@@ -77,7 +77,7 @@ hve-spielberg depends on two **Claude Code skills** plus the **`hyperframes` npm
 |-----------|------|---------|---------|
 | `hyperframes` skill | Claude Code skill | Authoring rules for HTML/GSAP compositions, sub-comps, transitions, captions | Install the HyperFrames skill into `~/.claude/skills/hyperframes/` |
 | `gsap` skill | Claude Code skill | Animation choreography reference (eases, timelines, stagger) | Recommended companion to the hyperframes skill |
-| `hyperframes` npm package | CLI | `init`, `lint`, `preview`, `inspect`, `validate`, `render`, `transcribe` (Phase 5's preferred timing verifier, with standalone Whisper as fallback), `tts` (no-key fallback when `ELEVENLABS_API_KEY` is unset) | `npx hyperframes <command>` (auto-fetches; package: [`hyperframes`](https://www.npmjs.com/package/hyperframes), repo: [github.com/heygen-com/hyperframes](https://github.com/heygen-com/hyperframes)) |
+| `hyperframes` npm package | CLI | `init`, `add` (pull catalog blocks, Phase 4), `lint`, `preview`, `inspect`, `validate`, `render`, `doctor` (render diagnostics), `transcribe` (Phase 5's preferred timing verifier, with standalone Whisper as fallback), `tts` (no-key fallback when `ELEVENLABS_API_KEY` is unset) | `npx hyperframes <command>` (auto-fetches; package: [`hyperframes`](https://www.npmjs.com/package/hyperframes), repo: [github.com/heygen-com/hyperframes](https://github.com/heygen-com/hyperframes)) |
 
 ## Installation
 

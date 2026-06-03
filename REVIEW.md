@@ -5,6 +5,15 @@
 **Commit:** `df8f5e5` — `feat(skill): migrate from Remotion to HyperFrames`  
 **Scope:** 46 files changed: +4,531 / −378
 
+> **Status: RESOLVED / HISTORICAL — point-in-time record against commit `df8f5e5`.**
+> Line numbers below no longer match the current files, and every blocking item has
+> since been addressed on this branch: P0 #1/#2 (`metallic-swoosh.md` now uses unique
+> track indices + an incoming-only crossfade), P1 #4 (`example/voiceover.py`
+> `_make_silence` has `check=True`), #5 (`generate_voiceover.py` cleans temp files via
+> `try/finally`), #6 (`search_music.py` catches `URLError`), #7 (`SKILL.md` `updated`
+> bumped), and P2 #8 (the docstring note was added). Read this as migration history,
+> not an open action list.
+
 ---
 
 ## Summary

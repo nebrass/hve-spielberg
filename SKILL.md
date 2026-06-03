@@ -93,7 +93,7 @@ Phase 1 requires: context.md
 Phase 2 requires: context.md + storyboard.md
 Phase 3 requires: public/screenshots/ (unless skipped, e.g. no real product)
 Phase 4 requires: context.md + storyboard.md + DESIGN.md + scenes/*.html
-Phase 5 requires: index.html (root composition)
+Phase 5 requires: index.html (root composition); Phase 5 then runs `npx hyperframes lint|inspect|validate` before render
 ```
 
 ---

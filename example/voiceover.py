@@ -153,8 +153,8 @@ def get_audio_duration(path: str) -> float:
         raise RuntimeError(f"ffprobe failed for {path} (file may be corrupt): "
                            f"{(e.stderr or '').strip()[:200]}")
     out = result.stdout.strip()
-    if not out:
-        raise RuntimeError(f"ffprobe returned empty duration for {path}")
+    if not out or out == "N/A":
+        raise RuntimeError(f"ffprobe returned no usable duration for {path}")
     return float(out)
 
 
@@ -346,8 +346,10 @@ def check_overlaps(segments: list, sections: list) -> list:
     for i in range(len(sections) - 1):
         next_start, _ = sections[i + 1]
         for seg in segments:
-            seg_start = seg.get("start", seg.get("startTime", 0))
-            seg_end = seg.get("end", seg.get("endTime", 0))
+            seg_start = seg.get("start", seg.get("startTime"))
+            seg_end = seg.get("end", seg.get("endTime"))
+            if seg_start is None or seg_end is None:
+                continue  # word lacks usable timing (e.g. a null start/end)
             if seg_start < next_start and seg_end > next_start + 0.5:
                 # Tolerate 0.5s of Whisper imprecision before flagging.
                 overlaps.append({

@@ -181,7 +181,7 @@ Use the `hyperframes` skill for the composition authoring rules — the most imp
 
 - **Standalone root** has no `<template>` wrapper; sub-compositions do.
 - Every clip has `data-start`, `data-duration`, `data-track-index`. Times are seconds; sub-second precision is fine (e.g. `data-duration="0.4"`).
-- Visual clips share track index 1 or higher; audio uses track 0; transitions sit on a high track (e.g. 9) so they paint on top.
+- Visual clips share track index 1 or higher; audio uses track 0; transitions sit on a separate high track (e.g. 9) only to avoid same-track overlap — paint order is controlled by CSS `z-index` (and DOM order when `z-index` is equal), NOT by the track index (see the CRITICAL invariant above and `patterns/metallic-swoosh.md`).
 - Layout the resting state first; add motion only after `npx hyperframes inspect` reports zero overlaps at any sampled timestamp.
 
 ## Step 4.5: Wire Transitions

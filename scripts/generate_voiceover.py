@@ -133,9 +133,10 @@ def get_audio_duration(path: str) -> float:
         raise RuntimeError(f"ffprobe failed for {path} (file may be corrupt): "
                            f"{(e.stderr or '').strip()[:200]}")
     out = result.stdout.strip()
-    if not out:
-        raise RuntimeError(f"ffprobe returned empty duration for {path} "
-                           "(file may be 0 bytes or corrupt)")
+    if not out or out == "N/A":
+        raise RuntimeError(f"ffprobe returned no usable duration for {path} "
+                           "(file may be 0 bytes, corrupt, or lack a duration "
+                           "header)")
     return float(out)
 
 
@@ -365,8 +366,10 @@ def check_overlaps(segments: list, sections: list) -> list:
         _, text = sections[i]
         next_start = sections[i + 1][0]
         for seg in segments:
-            seg_start = seg.get("start", seg.get("startTime", 0))
-            seg_end = seg.get("end", seg.get("endTime", 0))
+            seg_start = seg.get("start", seg.get("startTime"))
+            seg_end = seg.get("end", seg.get("endTime"))
+            if seg_start is None or seg_end is None:
+                continue  # word lacks usable timing (e.g. a null start/end)
             if seg_start < next_start and seg_end > next_start + 0.5:
                 overlaps.append({
                     "section": i,
@@ -395,7 +398,9 @@ def main():
             duration = get_audio_duration(output)
             print(f"    Duration: {duration:.1f}s (starts at {start}s)")
         else:
-            print(f"    FAILED — skipping")
+            print("    FAILED — aborting (skipping would leave this scene "
+                  "silent while still reporting success)", file=sys.stderr)
+            sys.exit(2)
 
     if not section_files:
         print("No sections generated. Check API key and network.")

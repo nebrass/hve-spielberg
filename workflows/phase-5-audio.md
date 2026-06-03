@@ -57,14 +57,23 @@ Each comma you remove saves ~0.3–0.5s. A 5-comma rewrite can reclaim 2+ second
 
 ### Generate with ElevenLabs (default, higher quality)
 
-Edit `scripts/generate_voiceover.py`:
+Copy the canonical script into the project first, then edit the **project-local
+copy** — never edit the shared skill install. Editing `$SKILL_DIR`'s script
+would bake this project's config into every future project, and two projects
+could not run concurrently.
+
+```bash
+SKILL_DIR=~/.claude/skills/hve-spielberg   # or .claude/skills/hve-spielberg for per-project install
+cp "$SKILL_DIR/scripts/generate_voiceover.py" ./voiceover.py
+```
+
+Edit the project-local `./voiceover.py`:
 - Set `VOICE_ID` to selected voice from Phase 1
 - Set `sections` list with `(start_time, text)` pairs
 - Set `VIDEO_DURATION` to match composition
 
 ```bash
-SKILL_DIR=~/.claude/skills/hve-spielberg   # or .claude/skills/hve-spielberg for per-project install
-python3 "$SKILL_DIR/scripts/generate_voiceover.py"
+python3 ./voiceover.py    # writes vo_section_NN.mp3 + voiceover.mp3 into the project dir
 ```
 
 ### Alternative: HyperFrames-native TTS (no API key, local)
@@ -156,7 +165,7 @@ data = json.load(sys.stdin)
 for r in data.get('results', []):
     print(f\"  [{r['id']}] {r['name']} ({r['duration']:.1f}s) — {r['license']} by {r['username']}\")
     print(f\"      page:    {r['url']}\")
-    print(f\"      preview: {r['previews']['preview-hq-mp3']}\")
+    print(f\"      preview: {r.get('previews', {}).get('preview-hq-mp3') or r.get('previews', {}).get('preview-lq-mp3', '')}\")
 "
 ```
 
