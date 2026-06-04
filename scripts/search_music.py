@@ -65,6 +65,11 @@ def main() -> int:
     except urllib.error.HTTPError as e:
         print(f"Freesound API error: HTTP {e.code} {e.reason}", file=sys.stderr)
         return 2
+    except urllib.error.URLError as e:
+        # DNS failure, connection refused, TLS error, socket timeout. Must come
+        # after HTTPError — HTTPError is a subclass of URLError.
+        print(f"Freesound API error: {e.reason}", file=sys.stderr)
+        return 2
 
     if args.json:
         json.dump(data, sys.stdout, indent=2)

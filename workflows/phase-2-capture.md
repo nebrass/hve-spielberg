@@ -1,6 +1,68 @@
 # Phase 2: Capture (Chrome DevTools)
 
-Automatically capture app/website screenshots for use in video scenes.
+Automatically capture **artifacts** (still screenshots and/or recorded clips) for use in video scenes.
+
+## Capture artifacts: stills and clips
+
+Phase 2 produces **capture artifacts**: still screenshots in `public/screenshots/`
+and/or recorded clips in `public/clips/`. A scene's `Capture:` field (from the
+storyboard) decides which. Recording sources (Chrome screencast for web, the
+terminal path for CLI) are wired in **Layer B**; in Layer A, clip scenes consume
+a `public/clips/scene-{NN}-{slug}.mp4` produced by any source (including a
+user-supplied file). Stills remain the default and the fallback.
+
+### Capture-source detection (graceful, never hard-fail)
+
+A scene's `Capture:` value selects a source; each is feature-detected and degrades cleanly:
+
+- `screencast` (web): usable only if the chrome-devtools MCP exposes `screencast_start`
+  AND the server was started with `--experimentalScreencast=true`. Detect by attempting
+  it; if the tool is absent or it errors about the flag, **fall back to `take_screenshot`**,
+  set the scene's `Capture: screenshot`, and tell the user how to enable it:
+  restart the chrome-devtools MCP server with `--experimentalScreencast=true`.
+- `terminal` (CLI): the default path is dependency-free (author a terminal scene from real
+  output, see "Recording a CLI scene"). The optional `asciinema`→video path is used only if
+  `asciinema` and `agg` are on PATH; otherwise use the default authored-scene path.
+- `supplied`: the user provides `public/clips/scene-{NN}-{slug}.mp4` directly.
+
+Stills remain the universal fallback — a missing source never blocks Phase 2.
+
+### Recording a web scene (screencast)
+
+When `Capture: screencast` and screencast is available (see detection above):
+
+1. Size the viewport to the composition canvas: `mcp__chrome-devtools__resize_page`
+   to the Phase-1 dimensions (e.g. 1920×1080) so the recording matches render size.
+2. Navigate to the scene's view and let it settle (`navigate_page` + `wait_for`).
+3. `mcp__chrome-devtools__screencast_start` with `filePath: "public/clips/scene-{NN}-{slug}.mp4"`.
+4. Drive the scripted interaction with the existing input tools (`click`, `wait_for`,
+   `evaluate_script` for scroll). Keep the meaningful action **one continuous take** —
+   never cut mid-action.
+5. `mcp__chrome-devtools__screencast_stop`. Keep the clip short (≤ ~8s) unless it's a
+   deliberate real-time beat (e.g. a live process); over-long clips bloat render + repo.
+6. Verify the file exists and is non-empty (`ffprobe` duration > 0). If screencast was
+   unavailable or the file is empty, fall back to `take_screenshot` for this scene and
+   record `Capture: screenshot` in the storyboard.
+
+The recorded `public/clips/scene-{NN}-{slug}.mp4` is consumed by the Layer-A clip-scene
+archetype (`templates/scene-clip.html`) in Phase 3 — no extra wiring here.
+
+### Recording a CLI scene (terminal)
+
+CLI tools cannot be screencast (no DOM page). Two paths:
+
+**Default — authored terminal scene (deterministic, no dependency):**
+1. Run the real command and capture its stdout (a Bash run, trimmed to the salient lines).
+2. Author a scene from `templates/scene-terminal.html` into `scenes/{NN}-terminal.html`,
+   replacing `CMD` with the real command and the `.oline` rows with the real output.
+3. This is an authored **scene** (not a clip) — it composes like any Phase-3 scene; no
+   `public/clips/` file is produced. It is deterministic and on-brand.
+
+**Optional — true real-time terminal recording (`asciinema` + `agg`, feature-detected):**
+1. Only if both are on PATH (see detection): `asciinema rec --command "<cmd>" cast.cast`.
+2. `agg cast.cast public/clips/scene-{NN}-{slug}.mp4` (render the cast to video).
+3. Compose as a clip via the Layer-A `templates/scene-clip.html` archetype.
+If either tool is missing, use the default authored-terminal path instead.
 
 ## Step 2.1: Get App URL
 
@@ -75,6 +137,20 @@ Show each screenshot with its scene number. Ask:
   }]
 }
 ```
+
+### Footage quality gate
+
+Before accepting any recorded clip, check (retake if it fails):
+
+- **Resolution** matches the composition canvas; **fps ≥ 30**.
+- **No dev artifacts** in frame: browser notifications, autofill dropdowns, devtools/console
+  overlays, extension badges, or personal data (emails, tokens, real names).
+- **The meaningful action is one clean, uninterrupted take** (no mid-action cut, no stray
+  cursor jitter, no accidental clicks).
+- **Duration** within the scene's planned slot (Phase 4 will footage-lock it).
+
+In the Phase-2 gallery review, present each clip and prompt the user to **accept or retake**.
+A rejected clip falls back to a screenshot or a re-record.
 
 ## Capture Tips
 

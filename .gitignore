@@ -1,0 +1,42 @@
+# macOS Finder metadata
+.DS_Store
+
+# HyperFrames render caches and verification outputs
+.hyperframes/
+**/.hyperframes/
+
+# Voiceover artifacts — should only ever exist inside example/ or a generated
+# project directory, never at repo root. Catches accidental script runs from
+# the wrong cwd.
+/voiceover.mp3
+/voiceover-normalized.mp3
+/voiceover-with-music.mp3
+/vo_section_*.mp3
+/transcript.json
+/voiceover.srt
+/voiceover.vtt
+/voiceover.tsv
+/voiceover.txt
+/background-music.mp3
+
+# Node
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE
+.vscode/
+.idea/
+
+# Claude Code session state (local runtime, not source)
+.omo/
+
+# Throwaway render/verify harness — never committed
+test/
+
+# Recorded clip footage is never committed (externalize as a release asset)
+public/clips/
+*.webm
