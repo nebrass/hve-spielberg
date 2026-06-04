@@ -106,6 +106,20 @@ Copy the skill files directly into any project's `.claude/skills/` directory:
 cp -r ~/.claude/skills/hve-spielberg my-project/.claude/skills/hve-spielberg
 ```
 
+## Updating
+
+Already installed an older version? Update to the latest `main`:
+
+```bash
+# Installed via the Skills CLI (npx skills add …):
+npx skills update hve-spielberg     # alias: upgrade · -g global · -p project · -y skip the scope prompt
+
+# Installed via a manual git clone (~/.claude/skills/hve-spielberg):
+cd ~/.claude/skills/hve-spielberg && git pull
+```
+
+Then **restart Claude Code** so the updated `SKILL.md` reloads — skills are read at session start, so file changes don't apply mid-session. Run `npx skills list` to see what's installed and where.
+
 ## Quick Start
 
 1. **Set API keys** (both optional but recommended):
