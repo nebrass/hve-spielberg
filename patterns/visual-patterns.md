@@ -125,6 +125,32 @@ tl.to(stat, {
 }, 0.8);
 ```
 
+### Step Label / Chapter Overlay
+
+Tutorial scenes carry an on-screen `Step N of M` pill + chapter title, layered over a clip
+or recap scene (authored copy from the storyboard `Step:`/`Chapter:` fields). `autoAlpha`
+reveal; **no exit tween** — the inter-scene transition owns the exit. Text ≥24px.
+
+```html
+<div class="chapter-ov">
+  <span class="step-pill">Step 2 of 5</span>
+  <span class="chapter-title">Configure the pipeline</span>
+</div>
+<style>
+  [data-composition-id="scene-NN-clip"] .chapter-ov{position:absolute;left:64px;top:56px;z-index:5;
+    display:flex;align-items:center;gap:20px;visibility:hidden;opacity:0}
+  [data-composition-id="scene-NN-clip"] .step-pill{font-family:"Geist Mono",monospace;font-size:24px;
+    font-weight:600;color:#fff;background:#0a72ef;padding:8px 18px;border-radius:999px}
+  [data-composition-id="scene-NN-clip"] .chapter-title{font-size:34px;font-weight:600;color:#fff;
+    text-shadow:0 2px 12px rgba(0,0,0,.6)}
+</style>
+```
+
+```js
+tl.fromTo(root + ' .chapter-ov', { y: -16, autoAlpha: 0 },
+  { y: 0, autoAlpha: 1, duration: 0.4, ease: "power2.out" }, 0.2);
+```
+
 ## Screenshot Presentation
 
 ### Browser Mockup with 3D Tilt

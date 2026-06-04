@@ -163,6 +163,8 @@ drop shadow, a vignette toward the brand canvas, a hidden OS cursor replaced by 
 pointer with a click pulse, and a color-grade toward the active design system's tokens. Clip-own
 audio is OFF in v1 (the `<video>` stays muted; the baked voiceover track carries sound).
 
+- **Tutorial mode:** layer a Step-Label / Chapter overlay (`patterns/visual-patterns.md` § Step Label / Chapter Overlay) so each instructional scene shows `Step N of M` + chapter title (spec §7.2c).
+
 ### Caption track for footage scenes (tutorial mode)
 
 When content-mode is `tutorial`, author one caption sub-comp per footage scene from the
