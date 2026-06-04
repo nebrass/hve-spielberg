@@ -2,7 +2,7 @@
 
 This is **hve-spielberg's own promo video**, built by the pipeline it promotes.
 
-▶ **`out/final.mp4`** — 60s, 1920×1080, H.264 + AAC stereo, ~3.4 MB. Published as a [GitHub Release asset](https://github.com/nebrass/hve-spielberg/releases/latest) (not committed — it's regenerable binary), or rebuild it locally with the steps below.
+▶ **[Watch on YouTube](https://www.youtube.com/watch?v=tIsQabrczRs)** — 60s, 1920×1080, H.264 + AAC stereo. The rendered `out/final.mp4` is not committed (regenerable binary); rebuild it locally with the steps below.
 
 Every *input* artifact lives in this directory — it's the project's primary demo, not a staged sample. The rendered video is the one thing that isn't committed.
 
