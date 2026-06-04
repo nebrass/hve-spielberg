@@ -1,0 +1,112 @@
+# Changelog
+
+All notable changes to the **hve-spielberg** skill are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+
+- README "Updating" section documenting how to pull the latest skill version.
+
+## [0.0.2] - 2026-06-04
+
+Migrated the rendering engine from **Remotion** (React, server-rendered) to
+**HyperFrames** (HTML + GSAP + headless Chromium) across the whole 6-phase
+pipeline, then extended it with first-class video-clip capture and a new
+tutorial content mode. Released via [PR #2](https://github.com/nebrass/hve-spielberg/pull/2).
+
+### Changed
+
+- **Rendering engine: Remotion → HyperFrames.** All six `workflows/phase-*.md`
+  rewritten. New scene authoring model (sub-compositions + `data-composition-id`
+  + GSAP timelines registered on `window.__timelines`) replaces Remotion JSX
+  compositions. Phase contracts (the `continue`/`jump` detection logic,
+  prerequisite lists, project-structure diagrams) updated end-to-end across
+  `SKILL.md`, `CLAUDE.md`, and `.github/copilot-instructions.md`.
+- Phase 2 capture contract generalized from "screenshots" to **capture
+  artifacts** (`public/screenshots/` and/or `public/clips/`).
+- `patterns/visual-patterns.md` fully rewritten for GSAP — adds the
+  `tl.fromTo()` stagger-trap rule, `autoAlpha` guidance, and `tl.set` for
+  late-entry elements.
+- `patterns/metallic-swoosh.md` reworked as an inline root-timeline pattern
+  (transitions straddle two scenes and can't be sub-comps).
+
+### Added
+
+- **Tutorial / walkthrough content mode** — a third mode beside promo and
+  showcase: task-ordered chapters with a cold-open on the payoff, required
+  baked captions, footage-time legibility punch-in for sub-24px UI text,
+  a recap archetype (`templates/scene-recap.html`), a "Step N of M" / chapter
+  overlay, and a ~90s segment cap. Warns-and-degrades to stills when clips are
+  absent; missing captions is the only hard gate.
+- **Video-clip capability** — real motion footage as a first-class,
+  source-agnostic capture artifact:
+  - _Capture target_ — clip-scene archetype `templates/scene-clip.html`
+    ("Wiring S"): a muted `<video>` in a sub-composition, `currentTime`-synced
+    by the runtime; footage-locked durations (`data-duration = (out - in) / speed`).
+    Optional per-scene storyboard clip fields (`Capture`, `Clip`, `Clip in/out`,
+    `Speed`, `Clip audio`, `Captions`).
+  - _Capture sources_ — Chrome DevTools `screencast` for web (experimental,
+    feature-detected, falls back to screenshots) and a dependency-free terminal
+    path for CLI (`templates/scene-terminal.html`, with optional `asciinema`+`agg`),
+    plus a footage quality gate (resolution/fps floor, one-clean-take review).
+- **10 vendored brand design presets** in `design-systems/<slug>/DESIGN.md`
+  (Stripe, Linear, Apple, Notion, Vercel, Airbnb, GitHub, Cal, Arc, Bento) —
+  original MIT-licensed prose — plus `design-systems/CONTRIBUTING.md` codifying
+  the quality bar.
+- New pattern files: `patterns/INDEX.md` (wayfinding), `anti-slop.md`,
+  `marker-highlight.md` (5 word-emphasis modes), `transition-catalog.md`.
+- `example/` — a self-contained reference promo project built by the pipeline
+  itself (storyboard, design seed, 5 scene HTMLs, `voiceover.py`,
+  `example/README.md` reproduction guide).
+- `CLAUDE.md` — codebase guide for future Claude Code sessions, and a top-level
+  `.gitignore`.
+- Opt-in clip-own audio mixed under a ducked voiceover (sidechain) in Phase 5,
+  with an ffprobe gate proving it reaches `out/final.mp4`.
+- CLI inventory entries `add` and `doctor`; `screencast_*` + `resize_page`
+  added to `allowed-tools`.
+
+### Fixed
+
+- `scripts/generate_voiceover.py` hardening: absolute-path ffmpeg concat,
+  list-or-dict transcript parser, `mktemp` → `mkstemp`, non-zero exit on a
+  failed TTS section, guards for null word timestamps and ffprobe `N/A`
+  durations, a mid-loop tempfile leak, word-level timestamps for overlap
+  detection, and voiceover-overrun warnings.
+- HyperFrames `lint`/`inspect`/`validate`/`render` gates take a project
+  directory, not a file.
+- `gsap.from()` → `tl.fromTo()` (the stagger trap) across workflows, patterns,
+  and templates.
+- Three rounds of Copilot review fixes plus a max-effort code-review pass
+  (phase-contract, no-music audio path, audio element id, design-system refs,
+  license posture, and example consistency).
+
+### Removed
+
+- The Remotion / React rendering path.
+- The committed `example/out/final.mp4` binary (3.4 MB) — now regenerable and
+  externalized to a GitHub Release asset.
+
+## [0.0.1] - 2026-04-28
+
+Initial release of the hve-spielberg skill.
+
+### Added
+
+- 6-phase AI video production orchestrator (`SKILL.md`) with per-phase approval
+  checkpoints and `new`/`continue`/`jump` entry modes: Discovery → Storytelling
+  → Capture (Chrome DevTools screenshots) → Design → Production → Audio & Render
+  (Remotion-based rendering).
+- Promo and showcase content modes.
+- ElevenLabs voiceover generation with Whisper timing verification
+  (`scripts/generate_voiceover.py`).
+- Freesound CC music search (`scripts/search_music.py`), switched over from an
+  earlier Pixabay integration.
+- README with install instructions and an MIT license.
+
+[Unreleased]: https://github.com/nebrass/hve-spielberg/compare/v0.0.2...HEAD
+[0.0.2]: https://github.com/nebrass/hve-spielberg/compare/v0.0.1...v0.0.2
+[0.0.1]: https://github.com/nebrass/hve-spielberg/releases/tag/v0.0.1
