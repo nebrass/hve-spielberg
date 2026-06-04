@@ -22,7 +22,7 @@ All times are in **seconds**. Each scene below maps 1:1 to a HyperFrames sub-com
 **Clip:** `public/clips/scene-{NN}-{slug}.mp4`                *(present when Capture yields a clip)*
 **Clip in/out:** {in}s–{out}s                                *(trim into the source; default: whole clip)*
 **Speed:** 1.0                                               *(defaultPlaybackRate; >1 only over dead air)*
-**Clip audio:** none                                         *(v1: clips are muted — field reserved, see spec §5.1)*
+**Clip audio:** none                                         *(default; set to a volume 0.0–1.0 to play the clip's own sound and duck the VO under it — Phase 5 Step 5.3a, spec §5.1/§14)*
 **Captions:** auto                                           *(auto = Whisper on the VO)*
 
 **Visual:**

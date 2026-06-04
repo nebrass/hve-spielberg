@@ -60,10 +60,10 @@ Each comma you remove saves ~0.3–0.5s. A 5-comma rewrite can reclaim 2+ second
 For clip scenes the scene window is footage-derived (Phase 4), not VO-derived.
 Write that scene's VO to fit the existing window (start ~1s in, end ≥0.5s before
 the window ends) exactly as for any scene — do not stretch the clip. Captions for
-footage use the existing Whisper VO transcript (`auto`). **Clip-own audio is OFF in
-v1**: clips stay muted and only `voiceover-with-music.mp3` plays; enabling a clip's
-own sound needs a future Phase-5 mixing sub-step (duck VO under clip audio,
-loudness-normalize, confirm the mix reaches `out/final.mp4`) and is out of v1 scope.
+footage use the existing Whisper VO transcript (`auto`).
+**Clip-own audio is opt-in.** Default is `Clip audio: none` (clips muted, only
+`voiceover-with-music.mp3` plays). A scene that sets `Clip audio: <volume>` gets its sound
+mixed in with the VO ducked under it — see Step 5.3a.
 
 ### Generate with ElevenLabs (default, higher quality)
 
@@ -282,6 +282,41 @@ Validate with `ebur128`: integrated loudness should land around -16 LUFS, true p
 ffmpeg -hide_banner -i voiceover-with-music.mp3 -af ebur128=peak=true -f null - 2>&1 | tail -16
 ```
 
+## Step 5.3a: Clip-own audio (opt-in)
+
+Run only when a storyboard scene sets `Clip audio: <volume>` (not `none`). Per clip you need:
+clip path (`Clip:`), the scene `data-start` (`CW`, from index.html), `Clip in/out`, `Speed`, `<volume>`.
+
+```bash
+CLIP=public/clips/scene-03-demo.mp4       # storyboard `Clip:`
+CIN=2.0 ; COUT=8.0 ; SPEED=1.0            # `Clip in/out` + `Speed`
+CW=18.5                                    # scene data-start in index.html
+VOL=0.6                                    # `Clip audio` value
+DELAY=$(echo "$CW*1000/1" | bc)
+
+# 1. Extract+trim clip audio, loudness-normalize, scale by VOL, delay to start at CW.
+ffmpeg -y -ss "$CIN" -to "$COUT" -i "$CLIP" \
+  -af "loudnorm=I=-18:TP=-2:LRA=11,volume=${VOL},adelay=${DELAY}|${DELAY}" \
+  -ac 2 clip-audio-03.mp3
+
+# 2. Duck the VO+music under the clip (sidechain), then mix the clip on top. Keep the
+#    canonical output filename — Step 5.4 reads it unchanged.
+ffmpeg -y -i voiceover-with-music.mp3 -i clip-audio-03.mp3 \
+  -filter_complex "
+    [1:a]asplit=2[clip][key];
+    [0:a][key]sidechaincompress=threshold=0.05:ratio=8:attack=20:release=300[ducked];
+    [ducked][clip]amix=inputs=2:duration=first:dropout_transition=0:normalize=0,
+                  alimiter=limit=0.95[out]" \
+  -map "[out]" -c:a libmp3lame -q:a 2 voiceover-with-music.tmp.mp3
+mv voiceover-with-music.tmp.mp3 voiceover-with-music.mp3
+```
+
+Repeat per opt-in clip (each pass overwrites the canonical file). Re-validate:
+```bash
+ffmpeg -hide_banner -i voiceover-with-music.mp3 -af ebur128=peak=true -f null - 2>&1 | tail -16
+```
+Expected: integrated loudness ≈ -16 LUFS, true peak < -0.5 dBFS; the ducked window is audibly quieter under the clip's sound.
+
 ## Step 5.4: Final Render
 
 The HyperFrames composition (`index.html`) already references `voiceover-with-music.mp3` via an `<audio>` clip on track 0 (see Phase 4). A single render command produces the final MP4 with embedded audio — no separate mux step.
@@ -302,6 +337,11 @@ npx hyperframes validate .
 mkdir -p out
 npx hyperframes render . --output out/final.mp4
 ```
+
+```bash
+ffprobe -v error -select_streams a -show_entries stream=codec_name,duration -of default=nw=1 out/final.mp4
+```
+Expected: `codec_name=aac` + duration ≈ composition length — the end-to-end proof the (ducked) clip audio reached `out/final.mp4`, since footage is muted in the composition.
 
 HyperFrames renders via headless Chromium and muxes audio in the same pass. Output is an MP4 (H.264 + AAC) at the canvas size chosen in Phase 1 (1920×1080 / 1080×1920 / 1080×1080 / 1080×1350).
 
