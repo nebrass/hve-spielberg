@@ -235,7 +235,7 @@ hve-spielberg/
 ├── scripts/
 │   └── generate_voiceover.py      # ElevenLabs TTS + transcript verification + auto-pad
 ├── example/                       # The skill's own promo, built by the skill itself
-│   ├── (out/final.mp4)           # 60s rendered demo (1920×1080, 3.4 MB) — published as a GitHub Release asset, not committed
+│   ├── (out/final.mp4)           # 60s rendered demo (1920×1080, 3.4 MB) — not committed; regenerable build artifact (demo on YouTube)
 │   ├── voiceover.py               # Project-local script with the actual VO timing config
 │   ├── index.html                 # Phase 4 root composition
 │   ├── scenes/*.html              # Phase 3 scene templates

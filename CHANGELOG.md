@@ -87,8 +87,8 @@ tutorial content mode. Released via [PR #2](https://github.com/nebrass/hve-spiel
 ### Removed
 
 - The Remotion / React rendering path.
-- The committed `example/out/final.mp4` binary (3.4 MB) — now regenerable and
-  externalized to a GitHub Release asset.
+- The committed `example/out/final.mp4` binary (3.4 MB) — no longer tracked in
+  git (regenerable build artifact; the demo lives on YouTube).
 
 ## [0.0.1] - 2026-04-28
 

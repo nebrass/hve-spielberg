@@ -24,10 +24,10 @@ Every *input* artifact lives in this directory — it's the project's primary de
 | `voiceover.mp3` | 5 | Generated 60s voiceover (5 sections with silence padding) — gitignored, regenerable |
 | `background-music.mp3` | 5 | "Unpretentious Reveal" by SondreDrakensson (Freesound, CC-BY) — gitignored, fetch via Step 5.2 |
 | `voiceover-with-music.mp3` | 5 | ffmpeg-mixed final audio with loudnorm + amix + alimiter — gitignored, regenerable |
-| `out/final.mp4` | 5 | **The rendered video.** `npx hyperframes render` output — published as a GitHub Release asset, not committed (regenerate with the steps below). |
+| `out/final.mp4` | 5 | **The rendered video.** `npx hyperframes render` output — not committed; regenerable build artifact (watch the demo on YouTube, or regenerate with the steps below). |
 | `CREDITS.md` | — | CC-BY attribution for the music track + voiceover provenance |
 
-Only the source files (`.html`, `.md`, `.py`) are committed. The rendered `out/final.mp4` is published as a GitHub Release asset (not version-controlled — 3.4 MB of regenerable binary), and the intermediate audio files (`voiceover.mp3`, `background-music.mp3`, `voiceover-with-music.mp3`, `vo_section_*.mp3`, `transcript.json`) are regenerable and `.gitignore`'d — see `example/.gitignore`.
+Only the source files (`.html`, `.md`, `.py`) are committed. The rendered `out/final.mp4` is not committed (not version-controlled — 3.4 MB of regenerable binary; the demo lives on YouTube), and the intermediate audio files (`voiceover.mp3`, `background-music.mp3`, `voiceover-with-music.mp3`, `vo_section_*.mp3`, `transcript.json`) are regenerable and `.gitignore`'d — see `example/.gitignore`.
 
 ## Reproducing the render
 
