@@ -24,6 +24,8 @@ All times are in **seconds**. Each scene below maps 1:1 to a HyperFrames sub-com
 **Speed:** 1.0                                               *(defaultPlaybackRate; >1 only over dead air)*
 **Clip audio:** none                                         *(default; set to a volume 0.0–1.0 to play the clip's own sound and duck the VO under it — Phase 5 Step 5.3a, spec §5.1/§14)*
 **Captions:** auto                                           *(auto = Whisper on the VO)*
+**Chapter:** {title}                                         *(tutorial mode only — chapter/section name)*
+**Step label:** Step {n} of {M}                              *(tutorial mode only — on-screen step pill)*
 
 **Visual:**
 - Text on screen: "{headline}"

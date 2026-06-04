@@ -170,7 +170,7 @@ Scene N+1: RECAP / NEXT     — Summarize the steps + where to go next (docs, in
 ```
 
 Chapters are **task-ordered**: each scene is one step with a single concrete goal, labeled
-on-screen "Step N of M" (from the storyboard `Step:`/`Chapter:` fields — see Phase 3/4).
+on-screen "Step N of M" (from the storyboard `Step label:`/`Chapter:` fields — see Phase 3/4).
 **Cold-open on the payoff** (spec §7.2d): scene 0 is a ~2–4s teaser of the finished end-state
 so the viewer knows what they're building toward. Tutorial mode **prefers clip scenes**
 (`Capture: screencast`/`terminal`) but does **not require** them — without capture, steps fall

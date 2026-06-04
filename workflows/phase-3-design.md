@@ -160,8 +160,8 @@ animate the wrapper. Copy `templates/scene-clip.html` as the starting point.
 
 **Mandatory brand treatments** (so footage reads premium, not raw): device/browser frame +
 drop shadow, a vignette toward the brand canvas, a hidden OS cursor replaced by a brand-styled
-pointer with a click pulse, and a color-grade toward the active design system's tokens. Clip-own
-audio is OFF in v1 (the `<video>` stays muted; the baked voiceover track carries sound).
+pointer with a click pulse, and a color-grade toward the active design system's tokens. The
+`<video>` stays muted; clip-own audio, if enabled, is mixed separately in Phase 5 Step 5.3a.
 
 - **Tutorial mode:** layer a Step-Label / Chapter overlay (`patterns/visual-patterns.md` § Step Label / Chapter Overlay) so each instructional scene shows `Step N of M` + chapter title (spec §7.2c).
 
