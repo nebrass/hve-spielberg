@@ -94,6 +94,11 @@ For **Showcase mode** example concepts:
 - **The Hero Feature** — Deep dive into one killer feature
 - **The Day-in-the-Life** — Show the workflow from a user's perspective
 
+For **Tutorial mode** example concepts (cold-open on the payoff, then task-ordered steps):
+- **The Quick Start** — Open on the finished result, then the shortest happy path to reproduce it
+- **The Build-Along** — Step-by-step in task order; the viewer follows each chapter and builds it themselves
+- **The Fix-It Walkthrough** — Start from a common problem/error state and resolve it one step at a time
+
 Present as selectable options. User picks one or mixes elements.
 
 ## Output

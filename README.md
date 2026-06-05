@@ -1,6 +1,6 @@
 # hve-spielberg
 
-**AI-powered video production pipeline for Claude Code.** From design thinking to final render — 6 automated phases that turn your app into a polished promo or showcase video.
+**AI-powered video production pipeline for Claude Code.** From design thinking to final render — 6 automated phases that turn your app into a polished promo, showcase, or tutorial video.
 
 ```
 /hve-spielberg
@@ -33,12 +33,13 @@ hve-spielberg is a Claude Code skill that orchestrates end-to-end video producti
 5. **Produces the video** in HyperFrames (HTML + GSAP, headless-Chromium rendered)
 6. **Adds voiceover + music** with ElevenLabs TTS (or local Kokoro-82M fallback), `npx hyperframes transcribe` for timing verification, and Freesound music
 
-### Dual Mode
+### Three Modes
 
 | Mode | Structure | Best For |
 |------|-----------|----------|
 | **Promo** | Hook → Pain → Solution → Features → CTA | Marketing, launches, ads |
 | **Showcase** | Intro → Walkthrough → Highlights → Closer | Portfolio, demos, case studies |
+| **Tutorial** | Cold Open → Step-by-Step Chapters → Recap | Walkthroughs, how-tos, onboarding |
 
 ## Pipeline
 
@@ -134,7 +135,7 @@ Then **restart Claude Code** so the updated `SKILL.md` reloads — skills are re
    ```
 
 3. **Follow the prompts.** Phase 0 → 5 is interactive; each phase has a user-approval checkpoint before advancing. The discovery questions include:
-   - **Mode**: Promo or Showcase
+   - **Mode**: Promo, Showcase, or Tutorial
    - **Duration + theme + aspect ratio**: 30s/60s/90s, light/dark, 16:9/9:16/1:1/4:5
    - **Visual identity strategy**: pick a [vendored brand](design-systems/) (fastest), pick a HyperFrames named style (medium), or derive from screenshots (most adaptive)
    - **Voice**: Matilda / Rachel / Daniel / Josh (ElevenLabs), or any of 54 Kokoro voices
