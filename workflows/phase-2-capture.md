@@ -49,7 +49,8 @@ archetype (`templates/scene-clip.html`) in Phase 3 — no extra wiring here.
 
 ### Recording a CLI scene (terminal)
 
-CLI tools cannot be screencast (no DOM page). Two paths:
+CLI tools cannot be screencast (no DOM page). Two paths — pick by the
+storyboard's intent and what's installed.
 
 **Default — authored terminal scene (deterministic, no dependency):**
 1. Run the real command and capture its stdout (a Bash run, trimmed to the salient lines).
@@ -58,11 +59,53 @@ CLI tools cannot be screencast (no DOM page). Two paths:
 3. This is an authored **scene** (not a clip) — it composes like any Phase-3 scene; no
    `public/clips/` file is produced. It is deterministic and on-brand.
 
-**Optional — true real-time terminal recording (`asciinema` + `agg`, feature-detected):**
-1. Only if both are on PATH (see detection): `asciinema rec --command "<cmd>" cast.cast`.
-2. `agg cast.cast public/clips/scene-{NN}-{slug}.mp4` (render the cast to video).
-3. Compose as a clip via the Layer-A `templates/scene-clip.html` archetype.
-If either tool is missing, use the default authored-terminal path instead.
+**Recommended for motion-heavy CLI — true real-time recording with `asciinema` + `agg`:**
+
+Use this when the *motion is the point* (streaming build logs, spinners,
+TUIs like `lazygit`/`htop`, an interactive prompt). For full guidance —
+pre-flight, cast editing, theme/font choices, troubleshooting — see
+[`patterns/cli-terminal-capture.md`](../patterns/cli-terminal-capture.md).
+
+Quick path (only when both `asciinema` and `agg` are on PATH; otherwise fall
+back to the authored-terminal path):
+
+1. **Prep the shell.** Open a clean terminal, set a minimal prompt, scrub
+   secrets from the environment, resize to 144×32:
+   ```bash
+   unset HISTFILE
+   export PS1='$ '
+   printf '\e[8;32;144t'
+   ```
+2. **Record.** `--idle-time-limit` collapses dead air — without it most
+   `npm install` clips are 90% waiting frames:
+   ```bash
+   asciinema rec --cols 144 --rows 32 --idle-time-limit 1.5 \
+     --command "<cmd>" cast.cast
+   ```
+3. **(Optional) Edit the cast.** The `.cast` is line-delimited JSON
+   (`[time, "o", "text"]`). Trim the tail, redact strings, or speed up
+   sections by halving `time` values. See the pattern doc.
+4. **Render to MP4.**
+   ```bash
+   agg --cols 144 --rows 32 --font-size 28 --theme monokai --fps-cap 30 \
+     cast.cast public/clips/scene-{NN}-{slug}.mp4
+   ```
+   If `agg` outputs only GIF on this host (older versions), pipe through
+   ffmpeg with `-vf "fps=30,scale=trunc(iw/2)*2:trunc(ih/2)*2" -pix_fmt yuv420p`
+   to land on an even-dimension H.264 MP4.
+5. **Compose** the scene from `templates/scene-terminal-clip.html` into
+   `scenes/{NN}-terminal-clip.html` — it wraps the MP4 in a macOS-style
+   window for brand parity with browser-mockup scenes. Animate the
+   `.term-frame` wrapper, never the `<video>` itself.
+6. **Verify** the file exists, is non-empty, and `ffprobe` reports a sane
+   duration. The Footage-quality gate (below) applies — bonus checks:
+   font ≥ 24px effective, no prompt cruft (`(venv)`, oh-my-zsh git status),
+   no idle gaps > 1s, theme contrast matches the scene background.
+
+If either tool is missing, do **not** prompt the user to install — fall back
+to the authored-terminal path and tell them once: *"asciinema/agg not
+detected — using the authored terminal scene. Install with `brew install
+asciinema agg` to record real terminal motion."*
 
 ## Step 2.1: Get App URL
 

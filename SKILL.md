@@ -33,7 +33,7 @@ ffmpeg -version       # ✓ for audio/video processing
 echo "ELEVENLABS_API_KEY: $([ -n \"$ELEVENLABS_API_KEY\" ] && echo '✓ set (high-quality TTS)' || echo '○ not set — Phase 5 will fall back to npx hyperframes tts (Kokoro-82M, local, lower quality)')"
 echo "FREESOUND_API_KEY: $([ -n \"$FREESOUND_API_KEY\" ] && echo '✓ set (music search)' || echo '○ not set (music search disabled, user-provided only)')"
 echo "screencast (web clips): optional — needs the chrome-devtools MCP started with --experimentalScreencast=true; falls back to screenshots if unavailable"
-echo "asciinema+agg (CLI clip recording): optional — $(command -v asciinema >/dev/null && command -v agg >/dev/null && echo '✓ available' || echo '○ not installed; CLI scenes use the authored-terminal path')"
+echo "asciinema+agg (CLI clip recording): optional — $(command -v asciinema >/dev/null && command -v agg >/dev/null && echo '✓ available (real terminal-clip path enabled — see patterns/cli-terminal-capture.md)' || echo '○ not installed (CLI scenes use the authored-terminal path; install: brew install asciinema agg  ·  apt install asciinema && cargo install --git https://github.com/asciinema/agg)')"
 ```
 
 ```bash

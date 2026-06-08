@@ -72,7 +72,7 @@ Each phase has a user-approval checkpoint before proceeding to the next.
 | Whisper | Recommended | `pip install openai-whisper` — voiceover timing verification |
 | `espeak-ng` | Optional | `brew install espeak-ng` / `apt install espeak-ng` — only needed for non-English voiceover via `hyperframes tts` fallback |
 | `--experimentalScreencast` (chrome-devtools MCP) | No | Enables `screencast` web-clip capture; without it, web scenes fall back to screenshots. |
-| `asciinema` + `agg` | No | Optional true terminal-clip recording for CLI scenes; without them, CLI scenes use the authored-terminal path. |
+| `asciinema` + `agg` | No | Optional true terminal-clip recording for CLI scenes; without them, CLI scenes use the authored-terminal path. Install: `brew install asciinema agg` (macOS) · `apt install asciinema && cargo install --git https://github.com/asciinema/agg` (Debian/Ubuntu). See [`patterns/cli-terminal-capture.md`](patterns/cli-terminal-capture.md) for the full recording workflow. |
 
 ### Required Skills
 

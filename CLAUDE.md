@@ -44,7 +44,7 @@ SKILL.md (orchestrator)
 - `scripts/generate_voiceover.py` → ElevenLabs API + optional Whisper transcription (Phase 5)
 - `scripts/search_music.py` → Freesound API for CC music (Phase 5)
 
-`templates/` files are copied into generated projects. `patterns/` files are referenced for visual techniques — `metallic-swoosh.md` documents *why* clipPath transitions are banned (black-sliver artifacts).
+`templates/` files are copied into generated projects. `patterns/` files are referenced for visual techniques — `metallic-swoosh.md` documents *why* clipPath transitions are banned (black-sliver artifacts), and `cli-terminal-capture.md` documents the `asciinema` + `agg` workflow for the optional real-terminal-clip path (the dependency-free authored-terminal path uses `templates/scene-terminal.html`; the asciinema clip path uses `templates/scene-terminal-clip.html`).
 
 ## Working with the skill scripts
 
