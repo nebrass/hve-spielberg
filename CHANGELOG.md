@@ -7,9 +7,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.3] - 2026-06-08
+
+Added a professional, skill-driven asciinema + agg CLI recording path so
+terminal scenes can be captured autonomously — no user keyboard required.
+The prior Phase 2 path treated asciinema as a one-line user-side note;
+this release wires it as a first-class capture source on par with Chrome
+DevTools screenshots and screencast clips.
+
 ### Added
 
-- README "Updating" section documenting how to pull the latest skill version.
+- **Autonomous asciinema recording.** The skill drives `asciinema rec
+  --command "<cmd>"` itself via its Bash tool: PTY-isolated, env-scrubbed
+  (`env -i HOME=$HOME PATH=$PATH SHELL=/bin/bash PS1='$ '`), and bounded
+  by `timeout Ns` so runaway / non-terminating commands can't stall the
+  phase. The user never opens a terminal. `agg` then renders the cast to
+  MP4 in the same autonomous sequence.
+- `patterns/cli-terminal-capture.md` — end-to-end guide: when to use the
+  asciinema path vs. the authored-terminal fallback, install per OS,
+  autonomous recording sequence, edge cases (long-running commands,
+  piped input, secrets-without-leaking, PTY allocation fallback to
+  `script -qc`), agg theme→palette pairing, quality gate, troubleshooting.
+- `templates/scene-terminal-clip.html` — Layer-A clip-scene archetype that
+  wraps the agg-rendered MP4 in a macOS-style window for brand parity
+  with browser-mockup scenes. Animates the `.term-frame` wrapper only
+  (respects the no-`<video>`-dimension-tween rule).
+- `templates/storyboard.md` — new `Capture: terminal-clip` value plus
+  required `Command:` and `Record timeout:` fields so storyboards carry
+  the inputs the autonomous path needs.
+- README "Updating" section documenting how to pull the latest skill
+  version (carried over from Unreleased).
+
+### Changed
+
+- `SKILL.md` frontmatter — `description` broadened so Phase 2 reads as a
+  multi-source step ("Chrome DevTools screenshots + screencast clips,
+  asciinema terminal recording") instead of screenshots only;
+  `allowed-tools` gains `Bash(asciinema:*), Bash(agg:*),
+  Bash(timeout:*), Bash(ffprobe:*)`; prerequisites block prints an
+  actionable per-OS install hint when asciinema/agg are missing.
+- `workflows/phase-2-capture.md` — replaces the 3-line asciinema note
+  with the full autonomous record → render → verify sequence,
+  preconditions, and the edge-case matrix.
+- `README.md` prerequisites table — concrete install commands and a link
+  to the new pattern doc.
+- `patterns/INDEX.md` and `CLAUDE.md` — register the new pattern doc and
+  template so future editing sessions find them.
+
+### Unchanged (by design)
+
+- If `asciinema`/`agg` are missing, the skill silently falls back to the
+  authored-terminal scene (`templates/scene-terminal.html`). No install
+  prompts — the user is told once, then Phase 2 proceeds.
 
 ## [0.0.2] - 2026-06-04
 
@@ -107,6 +156,7 @@ Initial release of the hve-spielberg skill.
   earlier Pixabay integration.
 - README with install instructions and an MIT license.
 
-[Unreleased]: https://github.com/nebrass/hve-spielberg/compare/v0.0.2...HEAD
+[Unreleased]: https://github.com/nebrass/hve-spielberg/compare/v0.0.3...HEAD
+[0.0.3]: https://github.com/nebrass/hve-spielberg/compare/v0.0.2...v0.0.3
 [0.0.2]: https://github.com/nebrass/hve-spielberg/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/nebrass/hve-spielberg/releases/tag/v0.0.1
