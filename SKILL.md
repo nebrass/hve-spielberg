@@ -3,7 +3,7 @@ name: hve-spielberg
 description: >
   End-to-end video production pipeline with design thinking. 6-phase orchestrator:
   Discovery (design thinking + context) → Storytelling (narrative + storyboard) →
-  Capture (Chrome DevTools screenshots) → Design (HyperFrames scene templates) →
+  Capture (Chrome DevTools screenshots + screencast clips, asciinema terminal recording) → Design (HyperFrames scene templates) →
   Production (HyperFrames composition) → Audio &amp; Render (ElevenLabs + Whisper + Freesound music).
   Three content modes: promo (marketing), showcase (portfolio/demo), or tutorial (walkthrough/how-to). Triggers: "create video",
   "promo video", "showcase video", "tutorial video", "walkthrough video", "how-to video", "product video", "demo video", "launch video".
