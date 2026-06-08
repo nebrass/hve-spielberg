@@ -18,7 +18,9 @@ All times are in **seconds**. Each scene below maps 1:1 to a HyperFrames sub-com
 **Window:** {start}s → {end}s ({duration}s)
 **Scene file:** `scenes/{NN}-{slug}.html`
 **Screenshot:** `public/screenshots/scene-{NN}-{desc}.png` *(omit if pure design scene)*
-**Capture:** screenshot | screencast | terminal | supplied   *(default: screenshot)*
+**Capture:** screenshot | screencast | terminal | terminal-clip | supplied   *(default: screenshot)*
+**Command:** `<exact shell command>`                          *(REQUIRED when Capture: terminal-clip — the skill executes this autonomously via `asciinema rec --command`. Use `bash -c '…'` for multi-step pipelines. Omit for Capture: terminal, which uses authored output.)*
+**Record timeout:** {seconds}                                *(terminal-clip only; default: scene duration + 2s — bounds non-terminating commands like dev servers / TUIs)*
 **Clip:** `public/clips/scene-{NN}-{slug}.mp4`                *(present when Capture yields a clip)*
 **Clip in/out:** {in}s–{out}s                                *(trim into the source; default: whole clip)*
 **Speed:** 1.0                                               *(defaultPlaybackRate; >1 only over dead air)*

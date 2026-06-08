@@ -59,53 +59,76 @@ storyboard's intent and what's installed.
 3. This is an authored **scene** (not a clip) — it composes like any Phase-3 scene; no
    `public/clips/` file is produced. It is deterministic and on-brand.
 
-**Recommended for motion-heavy CLI — true real-time recording with `asciinema` + `agg`:**
+**Recommended for motion-heavy CLI — autonomous real-time recording with `asciinema` + `agg`:**
 
 Use this when the *motion is the point* (streaming build logs, spinners,
 TUIs like `lazygit`/`htop`, an interactive prompt). For full guidance —
-pre-flight, cast editing, theme/font choices, troubleshooting — see
+shell pre-flight, cast editing, theme/font choices, troubleshooting — see
 [`patterns/cli-terminal-capture.md`](../patterns/cli-terminal-capture.md).
 
-Quick path (only when both `asciinema` and `agg` are on PATH; otherwise fall
-back to the authored-terminal path):
+**The skill drives `asciinema` itself via the Bash tool — the user does NOT
+open a terminal or run anything by hand.** This works because
+`asciinema rec --command "<cmd>"` is non-interactive: asciinema allocates
+its own PTY, runs the command headless, captures stdout/stderr/timing,
+and exits when the command exits. Wrap in `timeout` so a runaway or
+non-terminating command (`htop`, dev server) can't stall the phase.
 
-1. **Prep the shell.** Open a clean terminal, set a minimal prompt, scrub
-   secrets from the environment, resize to 144×32:
-   ```bash
-   unset HISTFILE
-   export PS1='$ '
-   printf '\e[8;32;144t'
-   ```
-2. **Record.** `--idle-time-limit` collapses dead air — without it most
-   `npm install` clips are 90% waiting frames:
-   ```bash
-   asciinema rec --cols 144 --rows 32 --idle-time-limit 1.5 \
-     --command "<cmd>" cast.cast
-   ```
-3. **(Optional) Edit the cast.** The `.cast` is line-delimited JSON
-   (`[time, "o", "text"]`). Trim the tail, redact strings, or speed up
-   sections by halving `time` values. See the pattern doc.
-4. **Render to MP4.**
-   ```bash
-   agg --cols 144 --rows 32 --font-size 28 --theme monokai --fps-cap 30 \
-     cast.cast public/clips/scene-{NN}-{slug}.mp4
-   ```
-   If `agg` outputs only GIF on this host (older versions), pipe through
-   ffmpeg with `-vf "fps=30,scale=trunc(iw/2)*2:trunc(ih/2)*2" -pix_fmt yuv420p`
-   to land on an even-dimension H.264 MP4.
-5. **Compose** the scene from `templates/scene-terminal-clip.html` into
-   `scenes/{NN}-terminal-clip.html` — it wraps the MP4 in a macOS-style
-   window for brand parity with browser-mockup scenes. Animate the
-   `.term-frame` wrapper, never the `<video>` itself.
-6. **Verify** the file exists, is non-empty, and `ffprobe` reports a sane
-   duration. The Footage-quality gate (below) applies — bonus checks:
-   font ≥ 24px effective, no prompt cruft (`(venv)`, oh-my-zsh git status),
-   no idle gaps > 1s, theme contrast matches the scene background.
+Preconditions (silently fall back to the authored-terminal path if any fail):
+- `command -v asciinema && command -v agg` both succeed
+- The scene's storyboard entry has `Capture: terminal-clip` AND a `Command:` field
+  with the exact shell command to record
 
-If either tool is missing, do **not** prompt the user to install — fall back
-to the authored-terminal path and tell them once: *"asciinema/agg not
-detected — using the authored terminal scene. Install with `brew install
-asciinema agg` to record real terminal motion."*
+Autonomous sequence the skill executes (no user input between steps):
+
+```bash
+# 1. Record — non-interactive, PTY-isolated, timeout-bounded.
+#    --idle-time-limit collapses dead air (npm install would be 90% waiting otherwise).
+#    PS1='$ ' is exported into the child PTY so the prompt is brand-clean.
+#    HISTFILE unset and a sub-env keeps stray secrets out of the recording.
+timeout 60s env -i HOME="$HOME" PATH="$PATH" SHELL=/bin/bash PS1='$ ' \
+  asciinema rec --cols 144 --rows 32 --idle-time-limit 1.5 \
+    --command "<cmd-from-storyboard>" \
+    public/clips/scene-{NN}-{slug}.cast \
+  || true   # exit 124 (timeout) is non-fatal — the cast up to that point is valid
+
+# 2. Render the cast to MP4 — also autonomous; no user input.
+agg --cols 144 --rows 32 --font-size 28 --theme monokai --fps-cap 30 \
+  public/clips/scene-{NN}-{slug}.cast \
+  public/clips/scene-{NN}-{slug}.mp4
+
+# 3. Verify — fail closed (fall back to authored-terminal) if the MP4 is bad.
+ffprobe -v error -show_entries format=duration -of csv=p=0 \
+  public/clips/scene-{NN}-{slug}.mp4
+```
+
+Then author the scene from `templates/scene-terminal-clip.html` into
+`scenes/{NN}-terminal-clip.html` — it wraps the MP4 in a macOS-style
+window for brand parity with browser-mockup scenes. Animate the
+`.term-frame` wrapper, never the `<video>` itself.
+
+**Edge cases the autonomous path handles:**
+
+- *Long-running / non-terminating commands.* `timeout 60s` bounds them; the
+  partial cast is still valid. Adjust the timeout per scene duration (a
+  6s scene shouldn't record 60s of footage — pick `timeout = scene_duration + 2s`).
+- *Commands needing piped input.* Use `--command "bash -c '...'"` with a
+  here-doc or `printf ... | <cmd>` inside. asciinema records the resulting PTY.
+- *TTY allocation failure in the sandbox.* If `asciinema rec` errors with
+  *"could not allocate pty"*, the skill falls back to `script -qc "<cmd>" /dev/null`
+  and converts the typescript via a stub cast header — documented in the
+  pattern doc. If that also fails, fall back to the authored-terminal path.
+- *agg only outputs GIF on this host (older versions).* Pipe through ffmpeg
+  with `-vf "fps=30,scale=trunc(iw/2)*2:trunc(ih/2)*2" -pix_fmt yuv420p` to
+  land on an even-dimension H.264 MP4.
+
+The Footage-quality gate (below) still applies — bonus terminal-clip checks:
+font ≥ 24px effective, no prompt cruft, no idle gaps > 1s, theme contrast
+matches the scene background.
+
+If `asciinema` / `agg` are missing, do **not** prompt the user to install —
+fall back to the authored-terminal path and tell them once: *"asciinema/agg
+not detected — using the authored terminal scene. Install with
+`brew install asciinema agg` to enable autonomous terminal recording."*
 
 ## Step 2.1: Get App URL
 

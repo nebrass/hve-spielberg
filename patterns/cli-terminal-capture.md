@@ -15,13 +15,17 @@ in a macOS-style window for brand parity with screenshot mockups.
 
 ## When to use this path
 
-Pick the **asciinema path** when:
+Pick the **asciinema path** (skill-driven; see "Recording mode — autonomous"
+below) when:
 
 - The motion is the point (a streaming build log, a progress bar, animated
   spinners, a TUI like `htop`/`lazygit`, a real `npm install` cascade).
 - The duration is short (≤ 8s of meaningful action) and you want the *real*
   cadence, not a synthetic one.
-- You're recording your own machine and can scrub secrets cleanly.
+- The command is **non-interactive** — it runs to completion (or to a
+  timeout) without needing keyboard input. asciinema's `--command` mode
+  lets the skill execute it autonomously via its Bash tool; the user
+  never touches the keyboard.
 
 Pick the **authored-terminal path** (`templates/scene-terminal.html`) when:
 
@@ -29,7 +33,9 @@ Pick the **authored-terminal path** (`templates/scene-terminal.html`) when:
   cleaner than real-time scroll.
 - The command takes long enough to be boring without heavy editing.
 - You don't have `asciinema` + `agg` installed and don't want a new dep.
-- The environment is sensitive (production hosts, real credentials in PATH).
+- The command genuinely needs a human at the keyboard (interactive prompts,
+  mouse-driven TUIs).
+- The environment is sensitive in ways `env -i` can't fully sanitize.
 
 ## Feature detection (already wired)
 
@@ -63,62 +69,107 @@ asciinema --version    # 2.x+
 agg --version          # 1.4+
 ```
 
-## Recording (pre-flight)
+## Recording mode — **autonomous (skill-driven)**
 
-The cast is **as professional as the shell you record in.** Spend 60 seconds
-preparing the environment — it's the difference between a polished clip and a
-debug log.
+The skill executes `asciinema` itself via its Bash tool. **The user does
+not open a terminal or run anything by hand.** This works because
+`asciinema rec --command "<cmd>"` is non-interactive: asciinema allocates
+its own PTY, runs the command headless, captures stdout/stderr with
+timing, and exits when the command exits.
 
-1. **Clean shell, no secrets.** Open a fresh terminal in a throwaway dir.
-   - `unset HISTFILE` to avoid leaking shell history into TUI prompts.
-   - `env | grep -iE 'token|key|secret|password'` should be empty in the
-     window. Use a sub-shell with `env -i HOME=$HOME PATH=$PATH SHELL=$SHELL bash`
-     if you need a hard reset.
-   - Hide personal data: real names, customer hostnames, internal URLs.
-2. **Brand-aligned prompt.** Set a minimal prompt that matches the video's
-   visual identity. A noisy oh-my-zsh prompt reads as amateur.
-   ```bash
-   export PS1='$ '                              # bash
-   PROMPT='%F{green}$%f '                       # zsh
-   set fish_greeting "" ; function fish_prompt; printf '$ '; end   # fish
-   ```
-3. **Sized window, fixed font.** The render width must equal the agg output
-   width (default `144 cols × 32 rows`). Resize the terminal before
-   recording — agg captures cols/rows from the cast header, so a resize
-   mid-record produces a jagged frame.
-   ```bash
-   printf '\e[8;32;144t'   # request 32 rows × 144 cols (most modern terms)
-   ```
-4. **Theme.** Dark background reads best in video and matches the
-   `scene-terminal-clip.html` chrome. Disable transparency.
-5. **Pacing.** Type at a deliberate pace — real keystrokes look more
-   authentic than pasted commands. asciinema preserves your timing.
+Three things make autonomous recording reliable:
 
-## Recording
+- **`--command`** — non-interactive single-shot mode. No stdin needed.
+- **`timeout Ns`** — bounds runaway / non-terminating commands (`htop`,
+  dev servers). Exit code 124 is non-fatal; the partial cast up to the
+  timeout is still valid and renderable.
+- **`env -i …`** — scrubs the parent environment so stray tokens, custom
+  `PS1`, oh-my-zsh git status, virtualenv markers, etc. don't leak into
+  the recording's PTY.
 
-Two modes — both produce a `.cast` JSON file you can edit before rendering.
-
-### A. Drive a single command
+The single autonomous sequence (also reproduced in
+`workflows/phase-2-capture.md`):
 
 ```bash
-asciinema rec --cols 144 --rows 32 \
-  --idle-time-limit 1.5 \
-  --command "npm run deploy" \
-  cast.cast
+# Record — non-interactive, PTY-isolated, timeout-bounded.
+timeout 60s env -i HOME="$HOME" PATH="$PATH" SHELL=/bin/bash PS1='$ ' \
+  asciinema rec --cols 144 --rows 32 --idle-time-limit 1.5 \
+    --command "<cmd-from-storyboard>" \
+    public/clips/scene-{NN}-{slug}.cast \
+  || true
+
+# Render — also autonomous.
+agg --cols 144 --rows 32 --font-size 28 --theme monokai --fps-cap 30 \
+  public/clips/scene-{NN}-{slug}.cast \
+  public/clips/scene-{NN}-{slug}.mp4
+
+# Verify.
+ffprobe -v error -show_entries format=duration -of csv=p=0 \
+  public/clips/scene-{NN}-{slug}.mp4
 ```
 
-- `--idle-time-limit 1.5` collapses any pause longer than 1.5s to 1.5s.
-  This is the single most important post-production lever — without it, a
-  `npm install` clip is 90% empty waiting frames.
-- `--command` exits when the command exits, giving a clean tail.
+The storyboard carries the inputs the skill needs:
 
-### B. Drive a shell interactively (for multi-step demos)
+```
+Capture: terminal-clip
+Command: shipfast deploy --env staging
+Record timeout: 8s          # scene duration + ~2s
+```
+
+Why `--idle-time-limit 1.5` matters: an unmodified `npm install` cast is
+~90% motionless waiting frames. With `--idle-time-limit` set, every pause
+longer than 1.5s collapses to 1.5s, giving a clip that *feels* real-time
+without dragging.
+
+### Edge cases the autonomous path handles
+
+- **Long-running / non-terminating commands.** `timeout` bounds them. Set
+  the storyboard's `Record timeout` to `scene_duration + ~2s` so the
+  recorded footage matches the slot.
+- **Commands needing piped input.** Wrap in `bash -c`:
+  ```bash
+  --command "bash -c 'printf \"y\\n\" | npm uninstall foo'"
+  ```
+- **Commands needing secrets** (e.g. an API key). Inject *only* the needed
+  variable into the scrubbed env:
+  ```bash
+  env -i HOME=$HOME PATH=$PATH SHELL=/bin/bash PS1='$ ' \
+      DEPLOY_TOKEN="$DEPLOY_TOKEN" \
+    asciinema rec ...
+  ```
+  The token is in the PTY's process env but **never echoed to the
+  recording** — asciinema captures stdout, not env dumps.
+- **TTY allocation failure** (rare; some sandboxes). If `asciinema rec`
+  errors with *"could not allocate pty"*, fall back to GNU `script`:
+  ```bash
+  script -qc "<cmd>" /dev/null      # produces a typescript file
+  ```
+  Convert by prepending an asciinema v2 header line
+  `{"version":2,"width":144,"height":32}` and timing-stamping each line;
+  if that's too brittle for the scene, fall back to the authored-terminal
+  path.
+- **Commands genuinely needing a human** (interactive prompts, mouse-driven
+  TUIs). Out of scope for autonomous mode — switch the storyboard's
+  `Capture:` to `terminal` (authored-typewriter path) or `supplied`
+  (user provides their own MP4).
+
+## Recording mode — interactive (sub-case)
+
+For multi-step demos where you *want* a human typing for cadence and
+authenticity, the same tools work as a hand-recorded session:
 
 ```bash
 asciinema rec --cols 144 --rows 32 --idle-time-limit 1.5 cast.cast
 # ... type commands ...
-exit                                              # ends the recording
+exit
 ```
+
+The pre-flight checklist (clean shell, brand prompt, sized window, dark
+theme, deliberate pacing) applies. The skill does not drive this mode —
+it's a user-side path for scenes where deterministic `--command` mode
+won't capture the intent. Drop the resulting cast into the storyboard's
+expected location (`public/clips/scene-{NN}-{slug}.cast`) and the skill
+will pick up from the render step.
 
 ## Editing the cast (optional, recommended)
 
