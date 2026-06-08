@@ -1,11 +1,19 @@
-<!-- Clip scene archetype (HyperFrames sub-composition). Wiring S: a plain
-     <video> is auto-discovered and currentTime-synced to this scene's window
-     (set by the root loader's data-start/data-duration). Animate the wrapper,
-     NEVER the <video> dimensions. Clip-own audio is OFF in v1 (muted). -->
+<!-- Clip scene archetype (HyperFrames sub-composition). Wiring S: give the
+     <video> the explicit clip contract — id + data-start="0" +
+     data-duration="<clip seconds>" + data-track-index="0" — so the runtime
+     frame-syncs its currentTime to this scene's window. data-start is relative
+     to THIS scene; data-duration = (out-in)/speed. The runtime only seeks
+     videos that carry data-start: a bare <video> is auto-discovered for display
+     but never time-synced, so it's safe ONLY as the single clip in a
+     composition (and even then it never advances past frame 0). With 2+ clip
+     scenes, bare videos cross-route — one scene plays another's footage,
+     another plays black. Animate the wrapper, NEVER the <video> dimensions.
+     Clip-own audio is OFF in v1 (muted). -->
 <template id="scene-NN-clip-template">
   <div data-composition-id="scene-NN-clip" data-width="1920" data-height="1080">
     <div class="clip-frame">
-      <video class="clip-vid" src="public/clips/scene-NN-slug.mp4" muted playsinline></video>
+      <video id="vid-NN" class="clip-vid" src="public/clips/scene-NN-slug.mp4"
+             data-start="0" data-duration="DUR" data-track-index="0" muted playsinline></video>
     </div>
     <style>
       [data-composition-id="scene-NN-clip"]{position:absolute;inset:0;display:flex;

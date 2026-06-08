@@ -47,6 +47,15 @@ When `Capture: screencast` and screencast is available (see detection above):
 The recorded `public/clips/scene-{NN}-{slug}.mp4` is consumed by the Layer-A clip-scene
 archetype (`templates/scene-clip.html`) in Phase 3 — no extra wiring here.
 
+> **Screencast frames are change-driven.** CDP emits a frame only when something on the
+> page visually changes — a static view (or a take that opens before any motion) yields a
+> 0-byte / near-empty clip with sparse, irregular PTS. Two fixes: **lead every take with
+> motion** (start `screencast_start` *before* the scripted action, or nudge a scroll/cursor
+> first) so the opening frame is captured, and after `screencast_stop` **normalize the PTS**
+> with `ffmpeg -i in.mp4 -r 30 -pix_fmt yuv420p out.mp4` so the change-driven timing becomes a
+> constant 30fps the renderer can footage-lock. If the clip is still empty, fall back to
+> `take_screenshot` (step 6).
+
 ### Recording a CLI scene (terminal)
 
 CLI tools cannot be screencast (no DOM page). Two paths — pick by the
@@ -84,20 +93,34 @@ Autonomous sequence the skill executes (no user input between steps):
 # 1. Record — non-interactive, PTY-isolated, timeout-bounded.
 #    --idle-time-limit collapses dead air (npm install would be 90% waiting otherwise).
 #    PS1='$ ' is exported into the child PTY so the prompt is brand-clean.
-#    HISTFILE unset and a sub-env keeps stray secrets out of the recording.
-timeout 60s env -i HOME="$HOME" PATH="$PATH" SHELL=/bin/bash PS1='$ ' \
-  asciinema rec --cols 144 --rows 32 --idle-time-limit 1.5 \
+#    COLUMNS/LINES set the terminal size — portable across asciinema 2.x (Python)
+#    and 3.x (Rust); `rec --cols/--rows` exist only on 3.x and error out on 2.x.
+#    COLUMNS=175 keeps wide output (kubectl get, docker ps) from wrapping.
+timeout 60s env -i HOME="$HOME" PATH="$PATH" SHELL=/bin/bash TERM=xterm-256color \
+  COLUMNS=175 LINES=32 PS1='$ ' \
+  asciinema rec --idle-time-limit 1.5 \
     --command "<cmd-from-storyboard>" \
     public/clips/scene-{NN}-{slug}.cast \
   || true   # exit 124 (timeout) is non-fatal — the cast up to that point is valid
 
-# 2. Render the cast to MP4 — also autonomous; no user input.
+# 2. Render — agg emits a GIF (it ignores the output extension), so render to .gif…
 agg --cols 144 --rows 32 --font-size 28 --theme monokai --fps-cap 30 \
   public/clips/scene-{NN}-{slug}.cast \
+  public/clips/scene-{NN}-{slug}.gif
+
+# 3. Normalize to constant-fps MP4 — REQUIRED: agg emits change-only frames (a
+#    short clip may be 2–4 frames) that break seek-driven <video> sync. If the
+#    narration outlasts the clip, swap the filter for
+#    tpad=stop_mode=clone:stop_duration=N,fps=30 (N = scene − clip; see the pattern doc).
+ffmpeg -y -i public/clips/scene-{NN}-{slug}.gif \
+  -vf "fps=30,scale=trunc(iw/2)*2:trunc(ih/2)*2" \
+  -c:v libx264 -profile:v high -pix_fmt yuv420p -movflags +faststart \
   public/clips/scene-{NN}-{slug}.mp4
 
-# 3. Verify — fail closed (fall back to authored-terminal) if the MP4 is bad.
-ffprobe -v error -show_entries format=duration -of csv=p=0 \
+# 4. Verify — fail closed (fall back to authored-terminal) if the MP4 is bad.
+#    Expect ~30 × duration frames, not 2–4 sparse ones.
+ffprobe -v error -count_frames -select_streams v:0 \
+  -show_entries stream=nb_read_frames,avg_frame_rate -of default=noprint_wrappers=1 \
   public/clips/scene-{NN}-{slug}.mp4
 ```
 
@@ -117,9 +140,10 @@ window for brand parity with browser-mockup scenes. Animate the
   *"could not allocate pty"*, the skill falls back to `script -qc "<cmd>" /dev/null`
   and converts the typescript via a stub cast header — documented in the
   pattern doc. If that also fails, fall back to the authored-terminal path.
-- *agg only outputs GIF on this host (older versions).* Pipe through ffmpeg
-  with `-vf "fps=30,scale=trunc(iw/2)*2:trunc(ih/2)*2" -pix_fmt yuv420p` to
-  land on an even-dimension H.264 MP4.
+- *agg always emits a GIF (it ignores the output extension) with change-only
+  frames.* That's why step 3's ffmpeg normalize is mandatory — not an older-agg
+  special case: it rebuilds a constant 30fps timeline so seek-driven `<video>`
+  sync and ordinary players can open the clip.
 
 The Footage-quality gate (below) still applies — bonus terminal-clip checks:
 font ≥ 24px effective, no prompt cruft, no idle gaps > 1s, theme contrast
@@ -228,7 +252,16 @@ A rejected clip falls back to a screenshot or a re-record.
       .forEach(el => el.style.display = 'none');
   }
   ```
-- **Dark mode** — If storyboard specifies dark theme, use `mcp__chrome-devtools__emulate` with `colorScheme: "dark"`
+- **Dark mode (media-query apps)** — If the app reads `prefers-color-scheme`, use `mcp__chrome-devtools__emulate` with `colorScheme: "dark"`
+- **Dark mode (class-based / Tailwind `.dark`)** — `colorScheme` does nothing for apps that toggle a `.dark` class (most Next.js / shadcn). A one-shot injected class is **clobbered by SPA hydration** (React re-renders the root and overwrites it); an init-script loses the same race. Inject a `MutationObserver` via `evaluate_script` *before* navigating, so the class is re-added every time hydration strips it:
+  ```javascript
+  () => {
+    const html = document.documentElement;
+    const set = () => html.classList.add('dark');   // or your app's theme class
+    set();
+    new MutationObserver(set).observe(html, { attributes: true, attributeFilter: ['class'] });
+  }
+  ```
 - **Retina quality** — Always use devicePixelRatio 2+ for crisp screenshots in video
 
 ## Output

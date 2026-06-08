@@ -65,7 +65,8 @@ pipx install asciinema
 Verify:
 
 ```bash
-asciinema --version    # 2.x+
+asciinema --version    # 2.x (Python) or 3.x (Rust) — both fine; size is set via
+                       # COLUMNS/LINES below, not `rec --cols/--rows` (3.x-only, errors on 2.x)
 agg --version          # 1.4+
 ```
 
@@ -92,19 +93,33 @@ The single autonomous sequence (also reproduced in
 
 ```bash
 # Record — non-interactive, PTY-isolated, timeout-bounded.
-timeout 60s env -i HOME="$HOME" PATH="$PATH" SHELL=/bin/bash PS1='$ ' \
-  asciinema rec --cols 144 --rows 32 --idle-time-limit 1.5 \
+# Terminal size is set via COLUMNS/LINES (portable across asciinema 2.x Python and
+# 3.x Rust; `rec --cols/--rows` exist only on 3.x and error out on 2.x). COLUMNS=175
+# keeps wide output (kubectl get, docker ps) from wrapping — size it to the scene.
+timeout 60s env -i HOME="$HOME" PATH="$PATH" SHELL=/bin/bash TERM=xterm-256color \
+  COLUMNS=175 LINES=32 PS1='$ ' \
+  asciinema rec --idle-time-limit 1.5 \
     --command "<cmd-from-storyboard>" \
     public/clips/scene-{NN}-{slug}.cast \
   || true
 
-# Render — also autonomous.
+# Render — agg emits a GIF (it ignores the output extension), so render to .gif…
 agg --cols 144 --rows 32 --font-size 28 --theme monokai --fps-cap 30 \
   public/clips/scene-{NN}-{slug}.cast \
+  public/clips/scene-{NN}-{slug}.gif
+
+# …then normalize to constant-fps H.264. REQUIRED, not optional: agg emits
+# change-only frames (a 2-line deploy can be 2–4 frames total) that break
+# seek-driven <video> sync. `fps=30` rebuilds a constant timeline; the
+# scale=trunc(...)*2 keeps dimensions even for H.264.
+ffmpeg -y -i public/clips/scene-{NN}-{slug}.gif \
+  -vf "fps=30,scale=trunc(iw/2)*2:trunc(ih/2)*2" \
+  -c:v libx264 -profile:v high -pix_fmt yuv420p -movflags +faststart \
   public/clips/scene-{NN}-{slug}.mp4
 
-# Verify.
-ffprobe -v error -show_entries format=duration -of csv=p=0 \
+# Verify — expect ~30 × duration frames at a constant rate (not 2–4 sparse frames).
+ffprobe -v error -count_frames -select_streams v:0 \
+  -show_entries stream=nb_read_frames,avg_frame_rate -of default=noprint_wrappers=1 \
   public/clips/scene-{NN}-{slug}.mp4
 ```
 
@@ -159,7 +174,7 @@ For multi-step demos where you *want* a human typing for cadence and
 authenticity, the same tools work as a hand-recorded session:
 
 ```bash
-asciinema rec --cols 144 --rows 32 --idle-time-limit 1.5 cast.cast
+COLUMNS=175 LINES=32 asciinema rec --idle-time-limit 1.5 cast.cast
 # ... type commands ...
 exit
 ```
@@ -190,36 +205,46 @@ Re-validate by playing it back: `asciinema play cast.cast`.
 
 ## Render to MP4
 
-`agg` renders a `.cast` to GIF by default; for hve-spielberg we want MP4.
-Two routes — pick the one that lands on PATH.
-
-### Route 1 — agg → MP4 directly (agg ≥ 1.5)
-
-```bash
-agg \
-  --cols 144 --rows 32 \
-  --font-size 28 \
-  --theme monokai \
-  --speed 1.0 \
-  --fps-cap 30 \
-  cast.cast public/clips/scene-{NN}-{slug}.mp4
-```
-
-### Route 2 — agg → GIF → MP4 via ffmpeg (older agg)
+`agg` is a **GIF generator** — it writes a GIF regardless of the output filename,
+so naming the output `.mp4` just produces a GIF inside an `.mp4` name (wrong
+container; seek-driven players and `<video>` sync choke on it). There is **one**
+reliable path: render to `.gif`, then normalize to constant-fps H.264 with ffmpeg.
 
 ```bash
-agg --cols 144 --rows 32 --font-size 28 --theme monokai \
-    cast.cast cast.gif
+# 1. Render the cast to a GIF.
+agg --cols 144 --rows 32 --font-size 28 --theme monokai --speed 1.0 --fps-cap 30 \
+    cast.cast public/clips/scene-{NN}-{slug}.gif
 
-ffmpeg -y -i cast.gif \
-  -movflags +faststart \
-  -pix_fmt yuv420p \
+# 2. Normalize to constant-fps MP4 — REQUIRED, not just for odd widths.
+ffmpeg -y -i public/clips/scene-{NN}-{slug}.gif \
   -vf "fps=30,scale=trunc(iw/2)*2:trunc(ih/2)*2" \
+  -c:v libx264 -profile:v high -pix_fmt yuv420p -movflags +faststart \
   public/clips/scene-{NN}-{slug}.mp4
 ```
 
-The `scale=trunc(iw/2)*2:trunc(ih/2)*2` filter forces even dimensions —
-H.264 requires it and a raw agg GIF will sometimes be odd-width.
+Why step 2 is mandatory: `agg` emits **change-only frames**, so a short clip
+(a 2-line deploy) can be 2–4 frames total at a variable sub-1fps rate, and a GIF
+decodes to `yuv444p`. Constant-fps players and HyperFrames' seek-driven `<video>`
+sync mishandle such sparse VFR, and `yuv444p` isn't broadly supported. `fps=30`
+rebuilds a constant 30fps timeline (a ~5s clip → ~150 frames), `pix_fmt yuv420p`
+fixes the colorspace, and `scale=trunc(...)*2` forces even dimensions for H.264.
+`agg --fps-cap` is a *cap*, not a floor, so it does not produce constant fps.
+
+### Fill a longer scene window (freeze-extend)
+
+A terminal reveal often finishes in ~4s while the narration over it runs ~20s.
+Clone the last frame to fill the slot instead of looping or freezing a dead
+`<video>` — swap the step-2 filter for `tpad`:
+
+```bash
+ffmpeg -y -i public/clips/scene-{NN}-{slug}.gif \
+  -vf "tpad=stop_mode=clone:stop_duration=N,fps=30,scale=trunc(iw/2)*2:trunc(ih/2)*2" \
+  -c:v libx264 -profile:v high -pix_fmt yuv420p -movflags +faststart \
+  public/clips/scene-{NN}-{slug}.mp4
+```
+
+`N = scene_duration − clip_duration` (e.g. a 5s clip + `stop_duration=8` → 13s,
+constant 30fps).
 
 ### Theme palette → brand parity
 
@@ -262,16 +287,20 @@ After the MP4 is at `public/clips/scene-{NN}-{slug}.mp4`:
 2. The wrapper's `data-composition-id`, animation, and clip-frame chrome are
    pre-wired — never animate the `<video>` itself, animate the `.term-frame`
    wrapper per the *no img-dimension tween* DON'T.
-3. Phase 4 root composition picks the clip up automatically (HyperFrames
-   auto-syncs `<video>` `currentTime` to the scene window).
+3. Give the scene's `<video>` its explicit clip contract — `id` + `data-start="0"`
+   + `data-duration` (= clip seconds) + `data-track-index="0"` (pre-wired in the
+   template). HyperFrames frame-syncs `currentTime` to the scene window from those
+   attributes; a bare `<video>` is not time-synced and, with 2+ clip scenes,
+   cross-routes (wrong footage / black).
 
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| Cast plays at wrong size | `--cols`/`--rows` flags missing on `rec` | Re-record; cast header is authoritative |
-| MP4 is letterboxed weirdly | agg cols/rows ≠ rec cols/rows | Pass the same `--cols`/`--rows` to `agg` |
-| Render fails: "height not divisible by 2" | agg GIF odd-width | Use the ffmpeg `scale=trunc(...)*2` filter |
+| Cast recorded at wrong size / wide output wraps | terminal size not set (or `rec --cols/--rows` used — 3.x-only, errors on 2.x) | Set `COLUMNS=175 LINES=32` in the `rec` env; the cast header records that size |
+| MP4 won't open / stutters in player or scene | agg emits change-only frames (2–4 total); an agg `.mp4` is really a GIF | Run the mandatory `fps=30` ffmpeg normalize (step 2 above) |
+| MP4 is letterboxed weirdly | agg `--cols`/`--rows` ≠ the recorded `COLUMNS`/`LINES` | Match `agg --cols/--rows` to the cast header size |
+| Render fails: "height not divisible by 2" | agg GIF odd-width | Use the ffmpeg `scale=trunc(...)*2` filter (in the normalize) |
 | Spinner shows blank chars | Terminal font missing glyphs | `agg --font-family "JetBrains Mono"` (or the font installed on the render host) |
 | Output trails off mid-line | `asciinema rec --command` killed by SIGINT | Re-run; let the command exit naturally, or use interactive mode + `exit` |
 | Text reads too small in render | Default `--font-size 14` | Use `--font-size 28` or larger for 1080p |
