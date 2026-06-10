@@ -88,6 +88,7 @@ Request these scene archetypes (adapt to mode — promo or showcase):
 | `scenes/03-stat.html` | Animated counter + label, used for proof points |
 | `scenes/04-cta.html` | Call to action: headline, button, URL, brand sign-off |
 | `scenes/NN-clip.html` | Real footage clip framed in a device/browser frame with overlays |
+| `scenes/NN-terminal-clip.html` | asciinema/agg terminal footage in a macOS-style window (`templates/scene-terminal-clip.html`) |
 | `scenes/NN-recap.html` | **Tutorial-mode only** — chapter-summary recap beat (~90s segment cap) |
 
 Each scene template must:
@@ -153,14 +154,27 @@ Transition pattern reference (when an archetype owns its own outgoing flourish):
 ### Clip scene (real footage)
 
 A clip scene is a normal sub-composition containing a `<video muted playsinline>` that carries
-the explicit clip contract: `id`, `data-start="0"`, `data-duration` (= `(out-in)/speed`), and
+the explicit clip contract: `id`, `data-start="0"`, `data-duration`, `data-media-start`, and
 `data-track-index="0"`. The runtime frame-syncs the video's `currentTime` to this scene's window
-from those attributes (Wiring S — render-verified). **Do not omit them**: the runtime only seeks
+from those attributes (Wiring S — render-verified). Two values matter:
+
+- `data-duration` = the scene loader's **full** `data-duration` from `index.html` — i.e.
+  `(out-in)/speed` **plus the 0.4s crossfade extension** (Phase 4 Step 4.5 /
+  `patterns/transition-catalog.md`). If the video's track ends at the nominal clip length,
+  the runtime hides it (`visibility:hidden`) during the crossfade and the outgoing scene
+  shows an empty frame.
+- `data-media-start` = the storyboard's `Clip in` (trim offset into the source, seconds;
+  `0` if the whole clip is used). Without it the runtime plays from source `t=0`, the
+  `Clip in/out` trim is silently ignored, and the footage desyncs from Phase 5's
+  clip-audio extraction (`CIN`).
+
+**Do not omit the contract**: the runtime only seeks
 videos that carry `data-start`, so a bare `<video>` is displayed but never time-synced — safe only
 as the single clip in the whole composition, and with two or more clip scenes bare videos
 cross-route (one scene plays another's footage, another plays black). And **never animate the
 `<video>` dimensions** — wrap it in a non-timed `.clip-frame` div and animate the wrapper. Copy
-`templates/scene-clip.html` as the starting point.
+`templates/scene-clip.html` as the starting point (`templates/scene-terminal-clip.html` for
+asciinema/agg terminal footage).
 
 **Mandatory brand treatments** (so footage reads premium, not raw): device/browser frame +
 drop shadow, a vignette toward the brand canvas, a hidden OS cursor replaced by a brand-styled

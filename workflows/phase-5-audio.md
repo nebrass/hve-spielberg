@@ -296,7 +296,8 @@ clip path (`Clip:`), the scene `data-start` (`CW`, from index.html), `Clip in/ou
 
 ```bash
 CLIP=public/clips/scene-03-demo.mp4       # storyboard `Clip:`
-CIN=2.0 ; COUT=8.0 ; SPEED=1.0            # `Clip in/out` + `Speed`
+CIN=2.0 ; COUT=8.0 ; SPEED=1.0            # `Clip in/out` + `Speed` — CIN must equal the
+                                           # scene <video>'s data-media-start or A/V desync
 CW=18.5                                    # scene data-start in index.html
 VOL=0.6                                    # `Clip audio` value
 DELAY=$(echo "$CW*1000/1" | bc)

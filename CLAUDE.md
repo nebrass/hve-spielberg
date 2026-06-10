@@ -72,6 +72,7 @@ These are enforced verbally in the `## DON'Ts` section of `SKILL.md`. If you mod
 - **Never animate `display`, `visibility`, or call `.play()` inside a timeline.** Breaks HyperFrames' deterministic seek; use `opacity` + `pointer-events`.
 - **Never animate `<img>` dimensions directly.** Wrap the `<img>` in a non-timed `<div>` and animate the wrapper's `transform`. Direct dimension tweens trigger layout recompute that breaks deterministic seek.
 - **Never use `tl.from()` for opacity tweens.** GSAP records the end-state at registration; if the CSS rest is `opacity:0` the recorded end is `opacity:0` (the tween goes nowhere), and under stagger later instances re-hide elements earlier ones revealed. Always use `tl.fromTo(target, {opacity:0,...}, {opacity:1,...}, pos)`.
+- **Never ship a bare `<video>` in a clip scene.** The runtime only frame-syncs videos carrying `data-start`; with 2+ clip scenes bare videos cross-route (wrong footage / black) while every gate passes green. The explicit contract is `id` + `data-start="0"` + `data-duration` (loader's crossfade-extended window, not the bare clip length) + `data-media-start` (storyboard `Clip in`) + `data-track-index="0"` — see `workflows/phase-3-design.md` § Clip scene.
 
 ## Common edits
 

@@ -191,10 +191,17 @@ Use the `hyperframes` skill for the composition authoring rules — the most imp
   scene window from the footage — do **not** stretch a clip scene to fit VO; VO
   is written to fit the footage-derived window in Phase 5.
 - **Each clip scene's inner `<video>` carries its own timing** — `id` + `data-start="0"`
-  + `data-duration` (= the clip's on-screen length) + `data-track-index="0"`. The runtime
+  + `data-duration` + `data-media-start` + `data-track-index="0"`. The runtime
   only frame-syncs videos that have `data-start`; without it the clip isn't synced and, with
   2+ clip scenes, cross-routes (one scene plays another's footage, another plays black). The
   `scene-clip.html` / `scene-terminal-clip.html` archetypes pre-wire this — keep it.
+  - The inner video's `data-duration` = the **loader's full window incl. the 0.4s crossfade
+    extension** (Step 4.5), NOT the bare clip length — the runtime hides an expired track
+    (`visibility:hidden`), so a video that ends at the nominal length blanks the frame during
+    every crossfade out of the scene.
+  - `data-media-start` = the storyboard's `Clip in` (trim offset, seconds; `0` if whole).
+    Omitting it plays the source from `t=0`, discards the `Clip in/out` trim, and desyncs the
+    footage from Phase 5's clip-audio window (`CIN`/`COUT`, Step 5.3a).
 - A rigid real-time clip (e.g. a live command run) sets its own budget: keep it at
   `Speed: 1.0` and size the scene to the real length; speed-ramp **only** explicitly
   marked dead air.

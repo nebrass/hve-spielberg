@@ -60,7 +60,7 @@ These come from `references/transitions/catalog.md` and bite if violated:
 - **Only fade the INCOMING scene's opacity 0→1.** Don't simultaneously fade the outgoing scene 1→0 — that lets the body color contribute to the composite during the crossfade (visible as darkening). The outgoing scene stays at opacity 1 below and is occluded naturally as the incoming one covers it.
 - **Body background should be white** (or whatever neutral matches your scene backgrounds). If anything ever exposes the body — a single-frame timing gap, a clipping artifact — white reads as intentional pacing. Black reads as a render bug.
 - **Scene 1 visible by default** — no `opacity: 0`. Scenes 2+ start at `opacity: 0` on the *container*; GSAP reveals them.
-- **No `class="clip"` on standalone scene divs.** Only the root composition gets `data-composition-id`/`data-start`/`data-duration`.
+- **No `class="clip"` on standalone scene divs.** Only the root composition gets `data-composition-id`/`data-start`/`data-duration` — with one exception: the `<video>` inside a clip scene carries its own `data-start`/`data-duration`/`data-media-start`/`data-track-index` per the explicit clip contract (`workflows/phase-3-design.md` § Clip scene). Never strip those.
 - **Z-index on exit-revealing transitions** (gravity drop, zoom out, diagonal split): outgoing scene goes ON TOP (`z-index: 10`) so it exits while revealing the new scene behind (`z-index: 1`).
 - **Light-leak overlays must be larger than the frame (2400px+)** so the edge never crosses the canvas during sweep. A visible-shape leak looks fake.
 - **Glitch RGB overlays at 35% opacity with NORMAL blend mode** — `mix-blend-mode: multiply` is invisible on dark backgrounds, which is exactly when you'd reach for glitch.

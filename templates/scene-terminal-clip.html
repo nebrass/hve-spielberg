@@ -2,13 +2,19 @@
      MP4 (public/clips/scene-NN-slug.mp4 from `agg` → `ffmpeg`) in a macOS-style
      window so it composes alongside browser-mockup scenes with brand parity.
      Wiring: give the <video> the explicit clip contract — id + data-start="0" +
-     data-duration="<clip seconds>" + data-track-index="0" — so HyperFrames
-     frame-syncs its currentTime to this scene's window. A bare <video> is
-     auto-discovered for display but never time-synced, so it's safe ONLY as the
-     single clip in a composition; with 2+ clip scenes, bare videos cross-route
-     (one scene plays another's footage, another plays black). Animate the
-     WRAPPER (.term-frame) only — never the <video> dimensions (see DON'T:
-     img/video dimension tweens).
+     data-duration + data-media-start + data-track-index="0" — so HyperFrames
+     frame-syncs its currentTime to this scene's window. Substitute:
+       DUR    = the scene loader's FULL data-duration from index.html, i.e.
+                (out-in)/speed PLUS the 0.4s crossfade extension — a track that
+                ends at the nominal clip length goes visibility:hidden during
+                the crossfade and the frame blanks.
+       MSTART = the storyboard's `Clip in` (trim offset, seconds; 0 if whole).
+     A bare <video> (no data-start) is auto-discovered for display but never
+     time-synced, so it's safe ONLY as the single clip in a composition (and
+     even then it never advances past frame 0); with 2+ clip scenes, bare
+     videos cross-route (one scene plays another's footage, another plays
+     black). Animate the WRAPPER (.term-frame) only — never the <video>
+     dimensions (see DON'T: img/video dimension tweens).
      Authored by Phase 2 after asciinema → agg has produced the MP4.
      See patterns/cli-terminal-capture.md for the recording workflow. -->
 <template id="scene-NN-terminal-clip-template">
@@ -19,7 +25,8 @@
         <span class="term-title">zsh</span>                <!-- REPLACE: command/shell label -->
       </div>
       <video id="vid-NN" class="term-vid" src="public/clips/scene-NN-slug.mp4"
-             data-start="0" data-duration="DUR" data-track-index="0" muted playsinline></video>
+             data-start="0" data-duration="DUR" data-media-start="MSTART"
+             data-track-index="0" muted playsinline></video>
     </div>
     <style>
       [data-composition-id="scene-NN-terminal-clip"]{position:absolute;inset:0;display:flex;

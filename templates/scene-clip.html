@@ -1,19 +1,29 @@
 <!-- Clip scene archetype (HyperFrames sub-composition). Wiring S: give the
-     <video> the explicit clip contract — id + data-start="0" +
-     data-duration="<clip seconds>" + data-track-index="0" — so the runtime
-     frame-syncs its currentTime to this scene's window. data-start is relative
-     to THIS scene; data-duration = (out-in)/speed. The runtime only seeks
-     videos that carry data-start: a bare <video> is auto-discovered for display
-     but never time-synced, so it's safe ONLY as the single clip in a
-     composition (and even then it never advances past frame 0). With 2+ clip
-     scenes, bare videos cross-route — one scene plays another's footage,
-     another plays black. Animate the wrapper, NEVER the <video> dimensions.
-     Clip-own audio is OFF in v1 (muted). -->
+     <video> the explicit clip contract — id + data-start="0" + data-duration +
+     data-media-start + data-track-index="0" — so the runtime frame-syncs its
+     currentTime to this scene's window. data-start is relative to THIS scene.
+     Placeholders to substitute when authoring:
+       DUR    = this scene loader's FULL data-duration from index.html, i.e.
+                (out-in)/speed PLUS the 0.4s crossfade extension (see
+                patterns/transition-catalog.md). If the video's track ends at
+                the nominal clip length, the runtime hides it
+                (visibility:hidden) during the crossfade and the frame blanks.
+       MSTART = the storyboard's `Clip in` (trim offset into the source file,
+                seconds; 0 if untrimmed). Without data-media-start the runtime
+                plays from source t=0 and ignores the trim — and desyncs from
+                Phase 5's clip-audio extraction (CIN).
+     The runtime only seeks videos that carry data-start: a bare <video> is
+     auto-discovered for display but never time-synced, so it's safe ONLY as
+     the single clip in a composition (and even then it never advances past
+     frame 0). With 2+ clip scenes, bare videos cross-route — one scene plays
+     another's footage, another plays black. Animate the wrapper, NEVER the
+     <video> dimensions. Clip-own audio is OFF in v1 (muted). -->
 <template id="scene-NN-clip-template">
   <div data-composition-id="scene-NN-clip" data-width="1920" data-height="1080">
     <div class="clip-frame">
       <video id="vid-NN" class="clip-vid" src="public/clips/scene-NN-slug.mp4"
-             data-start="0" data-duration="DUR" data-track-index="0" muted playsinline></video>
+             data-start="0" data-duration="DUR" data-media-start="MSTART"
+             data-track-index="0" muted playsinline></video>
     </div>
     <style>
       [data-composition-id="scene-NN-clip"]{position:absolute;inset:0;display:flex;
