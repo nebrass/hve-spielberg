@@ -54,6 +54,47 @@ DevTools screenshots and screencast clips.
 - `patterns/INDEX.md` and `CLAUDE.md` — register the new pattern doc and
   template so future editing sessions find them.
 
+### Fixed
+
+- **Clip `<video>` timing contract.** Clip scenes previously used a bare
+  `<video>` and told authors *not* to add timing attributes. The runtime only
+  frame-syncs videos carrying `data-start`, so with 2+ clip scenes footage
+  cross-routed (one scene played another's footage, another played black)
+  while `lint`/`inspect`/`validate` all passed green. Both clip templates and
+  the phase-3/4 docs now mandate the explicit contract: `id` +
+  `data-start="0"` + `data-duration` + `data-media-start` +
+  `data-track-index="0"`. Also added to the central `## DON'Ts` list and as a
+  carve-out in `patterns/transition-catalog.md`.
+- **`Clip in/out` trim now lands in the scene** via `data-media-start`
+  (= storyboard `Clip in`). Previously the trim was silently ignored — the
+  video played from source `t=0` and desynced from Phase 5's clip-audio
+  extraction (`CIN`).
+- **Clips no longer blank during crossfades.** The inner video's
+  `data-duration` is the scene loader's full crossfade-extended window (per
+  `patterns/transition-catalog.md`), not the bare clip length — an
+  expired track goes `visibility:hidden` mid-crossfade otherwise.
+- **Phase 1 now surfaces `Capture: terminal-clip`** (with `Command:` /
+  `Record timeout:`) so new-mode storyboards can actually trigger the
+  autonomous asciinema path.
+- **asciinema record env keeps `LANG`** (`LANG="${LANG:-C.UTF-8}"` through
+  `env -i`) — asciinema 2.x aborts without a UTF-8 locale.
+- **agg no longer passes `--cols`/`--rows`** — it reads the size from the
+  cast header; the previous hardcoded `144×32` mismatched the recorded
+  `175×32` and wrapped/letterboxed wide output. The intermediate GIF now goes
+  to `$TMPDIR` instead of `public/clips/`, and the verify step reads
+  `nb_frames` from the header instead of a full `-count_frames` decode.
+- **`timeout` is feature-detected** (GNU coreutils; absent on stock macOS —
+  install hint now says `brew install asciinema agg coreutils`), and the
+  PTY-failure fallback documents both `script` syntaxes (GNU `-qc` vs
+  BSD/macOS positional). `allowed-tools` gains `Bash(script:*)` and
+  `mcp__chrome-devtools__emulate` (used for viewport + dark-mode emulation).
+- **Dark-mode MutationObserver guidance inverted to the working order** —
+  inject *after* `navigate_page` (navigation wipes the page's JS context;
+  hydration re-renders don't navigate, so the observer survives them).
+- **Mandatory hero-frame content check in Phase 4** (`inspect --at` scene
+  midpoints, then read the PNGs) — the mechanical gates can't see wrong
+  content; this is how the bare-`<video>` cross-route shipped unnoticed.
+
 ### Unchanged (by design)
 
 - If `asciinema`/`agg` are missing, the skill silently falls back to the
