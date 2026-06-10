@@ -100,7 +100,9 @@ The single autonomous sequence (also reproduced in
 # Terminal size is set via COLUMNS/LINES (portable across asciinema 2.x Python and
 # 3.x Rust; `rec --cols/--rows` exist only on 3.x and error out on 2.x). COLUMNS=175
 # keeps wide output (kubectl get, docker ps) from wrapping — size it to the scene.
-timeout 60s env -i HOME="$HOME" PATH="$PATH" SHELL=/bin/bash TERM=xterm-256color \
+# RECORD_TIMEOUT = storyboard `Record timeout` (default scene_duration + 2s).
+RECORD_TIMEOUT="${RECORD_TIMEOUT:-60}"
+timeout "${RECORD_TIMEOUT}s" env -i HOME="$HOME" PATH="$PATH" SHELL=/bin/bash TERM=xterm-256color \
   LANG="${LANG:-C.UTF-8}" COLUMNS=175 LINES=32 PS1='$ ' \
   asciinema rec --idle-time-limit 1.5 \
     --command "<cmd-from-storyboard>" \

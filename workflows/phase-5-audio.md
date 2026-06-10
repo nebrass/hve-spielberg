@@ -55,7 +55,7 @@ When a section overruns budget, **drop commas before dropping words**. Restructu
 
 Each comma you remove saves ~0.3–0.5s. A 5-comma rewrite can reclaim 2+ seconds without cutting meaning.
 
-`scripts/generate_voiceover.py` catches this for you at assembly time: when a section's audio overruns its slot it prints `WARNING: section N audio overruns its Xs slot by Ys — every later section starts early and desyncs from its scene` to stderr. **Watch stderr** — a single overrun cascades into every later section, so fix the flagged one (drop commas first) and re-run before moving on.
+`scripts/generate_voiceover.py` catches this for you at assembly time: when a section's audio overruns its slot it prints a stderr warning like `WARNING: section N audio overruns its Xs slot by Ys — every later section starts early and desyncs from its scene. Shorten this section's text.` **Watch stderr** — a single overrun cascades into every later section, so fix the flagged one (drop commas first) and re-run before moving on.
 
 ### Clip scenes and VO timing
 

@@ -104,7 +104,10 @@ Autonomous sequence the skill executes (no user input between steps):
 #    COLUMNS/LINES set the terminal size — portable across asciinema 2.x (Python)
 #    and 3.x (Rust); `rec --cols/--rows` exist only on 3.x and error out on 2.x.
 #    COLUMNS=175 keeps wide output (kubectl get, docker ps) from wrapping.
-timeout 60s env -i HOME="$HOME" PATH="$PATH" SHELL=/bin/bash TERM=xterm-256color \
+#    RECORD_TIMEOUT comes from the storyboard's `Record timeout` field (default
+#    scene_duration + 2s) — bounds non-terminating commands to the scene's slot.
+RECORD_TIMEOUT="${RECORD_TIMEOUT:-60}"   # seconds, from storyboard `Record timeout`
+timeout "${RECORD_TIMEOUT}s" env -i HOME="$HOME" PATH="$PATH" SHELL=/bin/bash TERM=xterm-256color \
   LANG="${LANG:-C.UTF-8}" COLUMNS=175 LINES=32 PS1='$ ' \
   asciinema rec --idle-time-limit 1.5 \
     --command "<cmd-from-storyboard>" \
@@ -146,9 +149,10 @@ window for brand parity with browser-mockup scenes. Animate the
 
 **Edge cases the autonomous path handles:**
 
-- *Long-running / non-terminating commands.* `timeout 60s` bounds them; the
-  partial cast is still valid. Adjust the timeout per scene duration (a
-  6s scene shouldn't record 60s of footage — pick `timeout = scene_duration + 2s`).
+- *Long-running / non-terminating commands.* `timeout` bounds them; the
+  partial cast is still valid. Set `RECORD_TIMEOUT` from the storyboard's
+  `Record timeout` (a 6s scene shouldn't record 60s of footage — default is
+  `scene_duration + 2s`).
 - *Commands needing piped input.* Use `--command "bash -c '...'"` with a
   here-doc or `printf ... | <cmd>` inside. asciinema records the resulting PTY.
 - *Commands needing secrets.* Inject only the needed variable into the
