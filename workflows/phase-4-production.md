@@ -153,7 +153,7 @@ Screenshots stay at `public/screenshots/` — referenced from `index.html` via r
     <!-- … etc … -->
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js" integrity="sha384-sG0Hv1tP1lZCk9KQmrIbY/XNwi+OY84GQqhMscbnsoBFqAz8KNCil1kvfL3Hbbk2" crossorigin="anonymous"></script>
   <script>
     // The root composition needs a registered timeline too, even if it only
     // hosts inter-scene transitions and ambient effects.

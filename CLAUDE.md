@@ -80,6 +80,12 @@ These are enforced verbally in the `## DON'Ts` section of `SKILL.md`. If you mod
 - **Change phase logic** → edit the relevant `workflows/phase-N-*.md`; update the prerequisite list in `SKILL.md` if a new required file is introduced.
 - **Adjust prerequisite checks** → the `## Prerequisites` block in `SKILL.md` (runs at skill entry).
 - **Bump skill metadata** → frontmatter at top of `SKILL.md` (especially `allowed-tools` if a new MCP tool is needed).
+- **Bump the GSAP version** → the CDN `<script>` tags carry a Subresource Integrity hash (`integrity="sha384-…" crossorigin="anonymous"`), pinned to `gsap@3.14.2`. Changing the version *requires* recomputing the hash, or the script is blocked and every scene renders without animation (caught by `npx hyperframes validate` in Phase 4/5). Update **all** occurrences together — `templates/scene-*.html`, the skeletons in `workflows/phase-3-design.md` + `workflows/phase-4-production.md`, and every `example/**/*.html`:
+  ```bash
+  V=3.x.y   # new version
+  H="sha384-$(curl -sL https://cdn.jsdelivr.net/npm/gsap@$V/dist/gsap.min.js | openssl dgst -sha384 -binary | base64)"
+  # then replace src=…/gsap@$V/… and integrity="$H" in every file above (keep them in lock-step)
+  ```
 
 ## Installation paths users invoke
 

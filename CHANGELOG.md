@@ -95,6 +95,15 @@ DevTools screenshots and screencast clips.
   midpoints, then read the PNGs) — the mechanical gates can't see wrong
   content; this is how the bare-`<video>` cross-route shipped unnoticed.
 
+### Security
+
+- **Subresource Integrity on the GSAP CDN tag.** Every `<script>` loading
+  `gsap@3.14.2` from jsDelivr (4 templates, the phase-3/phase-4 skeletons, and
+  all `example/` scenes) now carries `integrity="sha384-…" crossorigin="anonymous"`,
+  so a tampered CDN response is rejected by the browser instead of executing in
+  `preview`/render. `CLAUDE.md` documents the hash-recompute step required on any
+  future GSAP version bump.
+
 ### Unchanged (by design)
 
 - If `asciinema`/`agg` are missing, the skill silently falls back to the
