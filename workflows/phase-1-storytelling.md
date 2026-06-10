@@ -227,11 +227,17 @@ Generate `storyboard.md` from `templates/storyboard.md`.
 Each scene defaults to a still **screenshot**. A scene may instead be a **clip**
 (real motion footage) by setting `Capture:` to `screencast` (web app, Phase 2),
 `terminal` (CLI tool — an authored animated terminal from real command output),
-or `supplied` (you provide the file). Clip scenes use the clip fields in the
-storyboard template (`Clip`, `Clip in/out`, `Speed`, `Captions`). A clip scene's
-on-screen duration is the footage length (see Phase 4), so plan the scene's slot
-around the real clip length. Clips are available in **all** content modes; in
-`promo` they must be device-framed accents (Phase 4).
+`terminal-clip` (CLI tool — a **real** recording: Phase 2 runs the command
+autonomously via asciinema + agg; requires a `Command:` field with the exact
+shell command and honors `Record timeout:`, default scene duration + 2s — see
+`patterns/cli-terminal-capture.md`), or `supplied` (you provide the file).
+Prefer `terminal-clip` over `terminal` when the command's real output matters
+(deploys, test runs, scaffolding) — it degrades to the authored-terminal path
+automatically if asciinema/agg aren't installed. Clip scenes use the clip
+fields in the storyboard template (`Clip`, `Clip in/out`, `Speed`, `Captions`).
+A clip scene's on-screen duration is the footage length (see Phase 4), so plan
+the scene's slot around the real clip length. Clips are available in **all**
+content modes; in `promo` they must be device-framed accents (Phase 4).
 
 ## Step 1.7: Which App Views to Capture
 

@@ -40,15 +40,17 @@ Pick the **authored-terminal path** (`templates/scene-terminal.html`) when:
 ## Feature detection (already wired)
 
 `SKILL.md` Prerequisites and `workflows/phase-2-capture.md` Capture-source
-detection both probe `command -v asciinema` and `command -v agg`. If either
-is missing the workflow degrades to the authored-terminal path and tells the
+detection both probe `command -v asciinema`, `command -v agg`, and
+`command -v timeout` (GNU coreutils — absent on stock macOS). If any is
+missing the workflow degrades to the authored-terminal path and tells the
 user. Do not hard-fail.
 
 ## Install
 
 ```bash
-# macOS
-brew install asciinema agg
+# macOS — coreutils provides GNU `timeout` (stock macOS has none; verified:
+# brew's coreutils installs it unprefixed)
+brew install asciinema agg coreutils
 
 # Debian / Ubuntu
 sudo apt install asciinema
@@ -89,37 +91,46 @@ Three things make autonomous recording reliable:
   the recording's PTY.
 
 The single autonomous sequence (also reproduced in
-`workflows/phase-2-capture.md`):
+`workflows/phase-2-capture.md` — edit BOTH together):
 
 ```bash
 # Record — non-interactive, PTY-isolated, timeout-bounded.
+# LANG must survive the env scrub — asciinema 2.x (Python) aborts without a
+# UTF-8 locale ("asciinema needs a UTF-8 native locale to run").
 # Terminal size is set via COLUMNS/LINES (portable across asciinema 2.x Python and
 # 3.x Rust; `rec --cols/--rows` exist only on 3.x and error out on 2.x). COLUMNS=175
 # keeps wide output (kubectl get, docker ps) from wrapping — size it to the scene.
 timeout 60s env -i HOME="$HOME" PATH="$PATH" SHELL=/bin/bash TERM=xterm-256color \
-  COLUMNS=175 LINES=32 PS1='$ ' \
+  LANG="${LANG:-C.UTF-8}" COLUMNS=175 LINES=32 PS1='$ ' \
   asciinema rec --idle-time-limit 1.5 \
     --command "<cmd-from-storyboard>" \
     public/clips/scene-{NN}-{slug}.cast \
-  || true
+  || true   # exit 124 (timeout) is non-fatal; check the .cast exists before
+            # rendering — || true also masks real failures (missing binary, locale)
+[ -s public/clips/scene-{NN}-{slug}.cast ] || { echo "no cast recorded — falling back to authored-terminal"; }
 
-# Render — agg emits a GIF (it ignores the output extension), so render to .gif…
-agg --cols 144 --rows 32 --font-size 28 --theme monokai --fps-cap 30 \
+# Render — agg emits a GIF (it ignores the output extension), so render to a TEMP
+# .gif (multi-MB intermediate — keep it out of public/clips/). Never pass
+# --cols/--rows: agg reads the size from the cast header (the COLUMNS/LINES
+# recorded above); a mismatch wraps/letterboxes the output.
+agg --font-size 28 --theme monokai --fps-cap 30 \
   public/clips/scene-{NN}-{slug}.cast \
-  public/clips/scene-{NN}-{slug}.gif
+  "${TMPDIR:-/tmp}/scene-{NN}-{slug}.gif"
 
 # …then normalize to constant-fps H.264. REQUIRED, not optional: agg emits
 # change-only frames (a 2-line deploy can be 2–4 frames total) that break
 # seek-driven <video> sync. `fps=30` rebuilds a constant timeline; the
 # scale=trunc(...)*2 keeps dimensions even for H.264.
-ffmpeg -y -i public/clips/scene-{NN}-{slug}.gif \
+ffmpeg -y -i "${TMPDIR:-/tmp}/scene-{NN}-{slug}.gif" \
   -vf "fps=30,scale=trunc(iw/2)*2:trunc(ih/2)*2" \
   -c:v libx264 -profile:v high -pix_fmt yuv420p -movflags +faststart \
   public/clips/scene-{NN}-{slug}.mp4
 
 # Verify — expect ~30 × duration frames at a constant rate (not 2–4 sparse frames).
-ffprobe -v error -count_frames -select_streams v:0 \
-  -show_entries stream=nb_read_frames,avg_frame_rate -of default=noprint_wrappers=1 \
+# nb_frames is read from the container header ffmpeg just wrote — no -count_frames
+# full decode needed.
+ffprobe -v error -select_streams v:0 \
+  -show_entries stream=nb_frames,avg_frame_rate -of default=noprint_wrappers=1 \
   public/clips/scene-{NN}-{slug}.mp4
 ```
 
@@ -148,19 +159,21 @@ without dragging.
 - **Commands needing secrets** (e.g. an API key). Inject *only* the needed
   variable into the scrubbed env:
   ```bash
-  env -i HOME=$HOME PATH=$PATH SHELL=/bin/bash PS1='$ ' \
+  env -i HOME=$HOME PATH=$PATH SHELL=/bin/bash LANG="${LANG:-C.UTF-8}" PS1='$ ' \
       DEPLOY_TOKEN="$DEPLOY_TOKEN" \
     asciinema rec ...
   ```
   The token is in the PTY's process env but **never echoed to the
   recording** — asciinema captures stdout, not env dumps.
 - **TTY allocation failure** (rare; some sandboxes). If `asciinema rec`
-  errors with *"could not allocate pty"*, fall back to GNU `script`:
+  errors with *"could not allocate pty"*, fall back to `script` — note the
+  two incompatible syntaxes:
   ```bash
-  script -qc "<cmd>" /dev/null      # produces a typescript file
+  script -qc "<cmd>" /dev/null      # GNU/Linux (util-linux)
+  script -q /dev/null <cmd>         # BSD/macOS — has no -c flag
   ```
   Convert by prepending an asciinema v2 header line
-  `{"version":2,"width":144,"height":32}` and timing-stamping each line;
+  `{"version":2,"width":175,"height":32}` and timing-stamping each line;
   if that's too brittle for the scene, fall back to the authored-terminal
   path.
 - **Commands genuinely needing a human** (interactive prompts, mouse-driven
@@ -210,13 +223,17 @@ so naming the output `.mp4` just produces a GIF inside an `.mp4` name (wrong
 container; seek-driven players and `<video>` sync choke on it). There is **one**
 reliable path: render to `.gif`, then normalize to constant-fps H.264 with ffmpeg.
 
+Same render + normalize steps as the autonomous sequence above (keep the two
+in sync — the flags must not drift):
+
 ```bash
-# 1. Render the cast to a GIF.
-agg --cols 144 --rows 32 --font-size 28 --theme monokai --speed 1.0 --fps-cap 30 \
-    cast.cast public/clips/scene-{NN}-{slug}.gif
+# 1. Render the cast to a TEMP GIF. No --cols/--rows — agg reads the size from
+#    the cast header; a mismatch wraps/letterboxes.
+agg --font-size 28 --theme monokai --fps-cap 30 \
+    cast.cast "${TMPDIR:-/tmp}/scene-{NN}-{slug}.gif"
 
 # 2. Normalize to constant-fps MP4 — REQUIRED, not just for odd widths.
-ffmpeg -y -i public/clips/scene-{NN}-{slug}.gif \
+ffmpeg -y -i "${TMPDIR:-/tmp}/scene-{NN}-{slug}.gif" \
   -vf "fps=30,scale=trunc(iw/2)*2:trunc(ih/2)*2" \
   -c:v libx264 -profile:v high -pix_fmt yuv420p -movflags +faststart \
   public/clips/scene-{NN}-{slug}.mp4
@@ -288,10 +305,13 @@ After the MP4 is at `public/clips/scene-{NN}-{slug}.mp4`:
    pre-wired — never animate the `<video>` itself, animate the `.term-frame`
    wrapper per the *no img-dimension tween* DON'T.
 3. Give the scene's `<video>` its explicit clip contract — `id` + `data-start="0"`
-   + `data-duration` (= clip seconds) + `data-track-index="0"` (pre-wired in the
-   template). HyperFrames frame-syncs `currentTime` to the scene window from those
+   + `data-duration` (= the loader's full crossfade-extended window) +
+   `data-media-start` (= storyboard `Clip in`, `0` if whole) + `data-track-index="0"`
+   (pre-wired in the template; substitute the `DUR`/`MSTART` placeholders).
+   HyperFrames frame-syncs `currentTime` to the scene window from those
    attributes; a bare `<video>` is not time-synced and, with 2+ clip scenes,
-   cross-routes (wrong footage / black).
+   cross-routes (wrong footage / black). Full contract: `workflows/phase-3-design.md`
+   § Clip scene.
 
 ## Troubleshooting
 
@@ -299,7 +319,7 @@ After the MP4 is at `public/clips/scene-{NN}-{slug}.mp4`:
 |---|---|---|
 | Cast recorded at wrong size / wide output wraps | terminal size not set (or `rec --cols/--rows` used — 3.x-only, errors on 2.x) | Set `COLUMNS=175 LINES=32` in the `rec` env; the cast header records that size |
 | MP4 won't open / stutters in player or scene | agg emits change-only frames (2–4 total); an agg `.mp4` is really a GIF | Run the mandatory `fps=30` ffmpeg normalize (step 2 above) |
-| MP4 is letterboxed weirdly | agg `--cols`/`--rows` ≠ the recorded `COLUMNS`/`LINES` | Match `agg --cols/--rows` to the cast header size |
+| MP4 is letterboxed weirdly | agg `--cols`/`--rows` passed and ≠ the recorded `COLUMNS`/`LINES` | Drop `--cols/--rows` entirely — agg reads the size from the cast header |
 | Render fails: "height not divisible by 2" | agg GIF odd-width | Use the ffmpeg `scale=trunc(...)*2` filter (in the normalize) |
 | Spinner shows blank chars | Terminal font missing glyphs | `agg --font-family "JetBrains Mono"` (or the font installed on the render host) |
 | Output trails off mid-line | `asciinema rec --command` killed by SIGINT | Re-run; let the command exit naturally, or use interactive mode + `exit` |
