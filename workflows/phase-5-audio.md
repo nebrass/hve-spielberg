@@ -55,6 +55,8 @@ When a section overruns budget, **drop commas before dropping words**. Restructu
 
 Each comma you remove saves ~0.3–0.5s. A 5-comma rewrite can reclaim 2+ seconds without cutting meaning.
 
+`scripts/generate_voiceover.py` catches this for you at assembly time: when a section's audio overruns its slot it prints a stderr warning like `WARNING: section N audio overruns its Xs slot by Ys — every later section starts early and desyncs from its scene. Shorten this section's text.` **Watch stderr** — a single overrun cascades into every later section, so fix the flagged one (drop commas first) and re-run before moving on.
+
 ### Clip scenes and VO timing
 
 For clip scenes the scene window is footage-derived (Phase 4), not VO-derived.
@@ -143,8 +145,11 @@ Compare timestamps against scene timings. If ANY overlap detected:
 
 If the content-mode is `tutorial`, on-screen VO captions are **mandatory on every footage
 segment** (spec §7.2) and this **intentionally overrides** the default-optional policy in
-`patterns/INDEX.md`. Silence-only segments (no VO words in the window) are exempt; in
-promo/showcase captions stay optional.
+`patterns/INDEX.md`. Silence-only segments (no VO words in the window) are exempt, as are
+segments whose on-screen copy already renders the spoken line verbatim (e.g. a recap beat or
+step title card where the visible text IS the narration) — in that case mark `Captions: carried`
+on the storyboard scene so the skip is a recorded, deliberate choice rather than an oversight.
+In promo/showcase captions stay optional.
 
 Captions are a HyperFrames caption sub-comp synced to `transcript.json` — see
 `references/captions.md` (GROUPS mechanism) and the Phase-3 caption-track recipe. Each
@@ -153,7 +158,9 @@ its window in `index.html`.
 
 Orchestrator enforcement before render (tutorial mode) — do not advance until all hold:
 1. `transcript.json` exists and passed the timing check.
-2. Every footage scene with VO has a caption track (per the storyboard `Captions: auto` field).
+2. Every footage scene with VO has a caption track, UNLESS its storyboard marks `Captions: carried`
+   (on-screen copy already shows the spoken line) or the window is silence-only. A bare
+   `Captions: auto` scene with VO and no track still blocks.
 3. Each caption group has a hard `tl.set(... {opacity:0, visibility:"hidden"}, group.end)` kill
    (the `references/captions.md` `[caption-lint]` self-check logs warnings otherwise).
 There is no programmatic gate; a true build-time rule would be upstream `hyperframes` lint work (spec §14).
@@ -289,7 +296,8 @@ clip path (`Clip:`), the scene `data-start` (`CW`, from index.html), `Clip in/ou
 
 ```bash
 CLIP=public/clips/scene-03-demo.mp4       # storyboard `Clip:`
-CIN=2.0 ; COUT=8.0 ; SPEED=1.0            # `Clip in/out` + `Speed`
+CIN=2.0 ; COUT=8.0 ; SPEED=1.0            # `Clip in/out` + `Speed` — CIN must equal the
+                                           # scene <video>'s data-media-start or A/V desync
 CW=18.5                                    # scene data-start in index.html
 VOL=0.6                                    # `Clip audio` value
 DELAY=$(echo "$CW*1000/1" | bc)

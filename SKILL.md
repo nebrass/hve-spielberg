@@ -3,15 +3,15 @@ name: hve-spielberg
 description: >
   End-to-end video production pipeline with design thinking. 6-phase orchestrator:
   Discovery (design thinking + context) → Storytelling (narrative + storyboard) →
-  Capture (Chrome DevTools screenshots) → Design (HyperFrames scene templates) →
+  Capture (Chrome DevTools screenshots + screencast clips, asciinema terminal recording) → Design (HyperFrames scene templates) →
   Production (HyperFrames composition) → Audio &amp; Render (ElevenLabs + Whisper + Freesound music).
   Three content modes: promo (marketing), showcase (portfolio/demo), or tutorial (walkthrough/how-to). Triggers: "create video",
   "promo video", "showcase video", "tutorial video", "walkthrough video", "how-to video", "product video", "demo video", "launch video".
 user-invocable: true
 argument-hint: "[project-dir] [--mode new|continue|jump] [--phase 0|1|2|3|4|5]"
-allowed-tools: Bash(npm:*), Bash(npx:*), Bash(ffmpeg:*), Bash(python:*), Bash(python3:*), Bash(pip:*), Bash(whisper:*), Bash(curl:*), Bash(git:*), Read, Write, Edit, Glob, Grep, AskUserQuestion, Skill, mcp__chrome-devtools__navigate_page, mcp__chrome-devtools__take_screenshot, mcp__chrome-devtools__take_snapshot, mcp__chrome-devtools__click, mcp__chrome-devtools__wait_for, mcp__chrome-devtools__evaluate_script, mcp__chrome-devtools__list_pages, mcp__chrome-devtools__new_page, mcp__chrome-devtools__select_page, mcp__chrome-devtools__screencast_start, mcp__chrome-devtools__screencast_stop, mcp__chrome-devtools__resize_page
-version: "0.0.2"
-updated: "2026-06-04"
+allowed-tools: Bash(npm:*), Bash(npx:*), Bash(ffmpeg:*), Bash(python:*), Bash(python3:*), Bash(pip:*), Bash(whisper:*), Bash(curl:*), Bash(git:*), Bash(asciinema:*), Bash(agg:*), Bash(timeout:*), Bash(ffprobe:*), Bash(script:*), Read, Write, Edit, Glob, Grep, AskUserQuestion, Skill, mcp__chrome-devtools__navigate_page, mcp__chrome-devtools__take_screenshot, mcp__chrome-devtools__take_snapshot, mcp__chrome-devtools__click, mcp__chrome-devtools__wait_for, mcp__chrome-devtools__evaluate_script, mcp__chrome-devtools__emulate, mcp__chrome-devtools__list_pages, mcp__chrome-devtools__new_page, mcp__chrome-devtools__select_page, mcp__chrome-devtools__screencast_start, mcp__chrome-devtools__screencast_stop, mcp__chrome-devtools__resize_page
+version: "0.0.3"
+updated: "2026-06-08"
 ---
 
 # hve-spielberg — AI Video Production Pipeline
@@ -33,7 +33,7 @@ ffmpeg -version       # ✓ for audio/video processing
 echo "ELEVENLABS_API_KEY: $([ -n \"$ELEVENLABS_API_KEY\" ] && echo '✓ set (high-quality TTS)' || echo '○ not set — Phase 5 will fall back to npx hyperframes tts (Kokoro-82M, local, lower quality)')"
 echo "FREESOUND_API_KEY: $([ -n \"$FREESOUND_API_KEY\" ] && echo '✓ set (music search)' || echo '○ not set (music search disabled, user-provided only)')"
 echo "screencast (web clips): optional — needs the chrome-devtools MCP started with --experimentalScreencast=true; falls back to screenshots if unavailable"
-echo "asciinema+agg (CLI clip recording): optional — $(command -v asciinema >/dev/null && command -v agg >/dev/null && echo '✓ available' || echo '○ not installed; CLI scenes use the authored-terminal path')"
+echo "asciinema+agg+timeout (CLI clip recording): optional — $(command -v asciinema >/dev/null && command -v agg >/dev/null && command -v timeout >/dev/null && echo '✓ available (real terminal-clip path enabled — see patterns/cli-terminal-capture.md)' || echo '○ incomplete (CLI scenes use the authored-terminal path; install — see patterns/cli-terminal-capture.md § Install; macOS: brew install asciinema agg coreutils)')"
 ```
 
 ```bash
@@ -165,6 +165,7 @@ See [workflows/phase-5-audio.md](workflows/phase-5-audio.md)
 - **Never animate `display`, `visibility`, or call `.play()` in timelines** — Breaks HyperFrames' deterministic seek; use `opacity` + `pointer-events`
 - **Never animate `<img>` dimensions directly** — Causes layout recompute that confuses deterministic seek. Wrap each `<img>` in a non-timed `<div>` and animate the wrapper's `transform` (`scale`, `translate`) instead
 - **Never use `tl.from()` for opacity tweens with stagger** — GSAP records the END state at registration; if CSS rest is `opacity:0` the recorded end is `opacity:0` and the animation goes nowhere. With stagger, later instances re-hide elements that earlier instances revealed. **Always use `tl.fromTo(target, {opacity:0,...}, {opacity:1,...}, pos)`.** See `patterns/visual-patterns.md` § "tl.from() stagger trap"
+- **Never ship a bare `<video>` in a clip scene** — the runtime only frame-syncs videos carrying `data-start`; bare videos cross-route with 2+ clip scenes (wrong footage / black) while all gates pass green. Every clip `<video>` carries the explicit contract: `id` + `data-start="0"` + `data-duration` (the loader's full crossfade-extended window) + `data-media-start` (storyboard `Clip in`) + `data-track-index="0"`. See `workflows/phase-3-design.md` § Clip scene
 
 ---
 

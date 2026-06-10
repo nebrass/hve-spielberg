@@ -7,9 +7,108 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.3] - 2026-06-08
+
+Added a professional, skill-driven asciinema + agg CLI recording path so
+terminal scenes can be captured autonomously — no user keyboard required.
+The prior Phase 2 path treated asciinema as a one-line user-side note;
+this release wires it as a first-class capture source on par with Chrome
+DevTools screenshots and screencast clips.
+
 ### Added
 
-- README "Updating" section documenting how to pull the latest skill version.
+- **Autonomous asciinema recording.** The skill drives `asciinema rec
+  --command "<cmd>"` itself via its Bash tool: PTY-isolated, env-scrubbed
+  (`env -i HOME=$HOME PATH=$PATH SHELL=/bin/bash PS1='$ '`), and bounded
+  by `timeout Ns` so runaway / non-terminating commands can't stall the
+  phase. The user never opens a terminal. `agg` then renders the cast to
+  MP4 in the same autonomous sequence.
+- `patterns/cli-terminal-capture.md` — end-to-end guide: when to use the
+  asciinema path vs. the authored-terminal fallback, install per OS,
+  autonomous recording sequence, edge cases (long-running commands,
+  piped input, secrets-without-leaking, PTY allocation fallback to
+  `script -qc`), agg theme→palette pairing, quality gate, troubleshooting.
+- `templates/scene-terminal-clip.html` — Layer-A clip-scene archetype that
+  wraps the agg-rendered MP4 in a macOS-style window for brand parity
+  with browser-mockup scenes. Animates the `.term-frame` wrapper only
+  (respects the no-`<video>`-dimension-tween rule).
+- `templates/storyboard.md` — new `Capture: terminal-clip` value plus
+  required `Command:` and `Record timeout:` fields so storyboards carry
+  the inputs the autonomous path needs.
+- README "Updating" section documenting how to pull the latest skill
+  version (carried over from Unreleased).
+
+### Changed
+
+- `SKILL.md` frontmatter — `description` broadened so Phase 2 reads as a
+  multi-source step ("Chrome DevTools screenshots + screencast clips,
+  asciinema terminal recording") instead of screenshots only;
+  `allowed-tools` gains `Bash(asciinema:*), Bash(agg:*),
+  Bash(timeout:*), Bash(ffprobe:*)`; prerequisites block prints an
+  actionable per-OS install hint when asciinema/agg are missing.
+- `workflows/phase-2-capture.md` — replaces the 3-line asciinema note
+  with the full autonomous record → render → verify sequence,
+  preconditions, and the edge-case matrix.
+- `README.md` prerequisites table — concrete install commands and a link
+  to the new pattern doc.
+- `patterns/INDEX.md` and `CLAUDE.md` — register the new pattern doc and
+  template so future editing sessions find them.
+
+### Fixed
+
+- **Clip `<video>` timing contract.** Clip scenes previously used a bare
+  `<video>` and told authors *not* to add timing attributes. The runtime only
+  frame-syncs videos carrying `data-start`, so with 2+ clip scenes footage
+  cross-routed (one scene played another's footage, another played black)
+  while `lint`/`inspect`/`validate` all passed green. Both clip templates and
+  the phase-3/4 docs now mandate the explicit contract: `id` +
+  `data-start="0"` + `data-duration` + `data-media-start` +
+  `data-track-index="0"`. Also added to the central `## DON'Ts` list and as a
+  carve-out in `patterns/transition-catalog.md`.
+- **`Clip in/out` trim now lands in the scene** via `data-media-start`
+  (= storyboard `Clip in`). Previously the trim was silently ignored — the
+  video played from source `t=0` and desynced from Phase 5's clip-audio
+  extraction (`CIN`).
+- **Clips no longer blank during crossfades.** The inner video's
+  `data-duration` is the scene loader's full crossfade-extended window (per
+  `patterns/transition-catalog.md`), not the bare clip length — an
+  expired track goes `visibility:hidden` mid-crossfade otherwise.
+- **Phase 1 now surfaces `Capture: terminal-clip`** (with `Command:` /
+  `Record timeout:`) so new-mode storyboards can actually trigger the
+  autonomous asciinema path.
+- **asciinema record env keeps `LANG`** (`LANG="${LANG:-C.UTF-8}"` through
+  `env -i`) — asciinema 2.x aborts without a UTF-8 locale.
+- **agg no longer passes `--cols`/`--rows`** — it reads the size from the
+  cast header; the previous hardcoded `144×32` mismatched the recorded
+  `175×32` and wrapped/letterboxed wide output. The intermediate GIF now goes
+  to `$TMPDIR` instead of `public/clips/`, and the verify step reads
+  `nb_frames` from the header instead of a full `-count_frames` decode.
+- **`timeout` is feature-detected** (GNU coreutils; absent on stock macOS —
+  install hint now says `brew install asciinema agg coreutils`), and the
+  PTY-failure fallback documents both `script` syntaxes (GNU `-qc` vs
+  BSD/macOS positional). `allowed-tools` gains `Bash(script:*)` and
+  `mcp__chrome-devtools__emulate` (used for viewport + dark-mode emulation).
+- **Dark-mode MutationObserver guidance inverted to the working order** —
+  inject *after* `navigate_page` (navigation wipes the page's JS context;
+  hydration re-renders don't navigate, so the observer survives them).
+- **Mandatory hero-frame content check in Phase 4** (`inspect --at` scene
+  midpoints, then read the PNGs) — the mechanical gates can't see wrong
+  content; this is how the bare-`<video>` cross-route shipped unnoticed.
+
+### Security
+
+- **Subresource Integrity on the GSAP CDN tag.** Every `<script>` loading
+  `gsap@3.14.2` from jsDelivr (4 templates, the phase-3/phase-4 skeletons, and
+  all `example/` scenes) now carries `integrity="sha384-…" crossorigin="anonymous"`,
+  so a tampered CDN response is rejected by the browser instead of executing in
+  `preview`/render. `CLAUDE.md` documents the hash-recompute step required on any
+  future GSAP version bump.
+
+### Unchanged (by design)
+
+- If `asciinema`/`agg` are missing, the skill silently falls back to the
+  authored-terminal scene (`templates/scene-terminal.html`). No install
+  prompts — the user is told once, then Phase 2 proceeds.
 
 ## [0.0.2] - 2026-06-04
 
@@ -107,6 +206,7 @@ Initial release of the hve-spielberg skill.
   earlier Pixabay integration.
 - README with install instructions and an MIT license.
 
-[Unreleased]: https://github.com/nebrass/hve-spielberg/compare/v0.0.2...HEAD
+[Unreleased]: https://github.com/nebrass/hve-spielberg/compare/v0.0.3...HEAD
+[0.0.3]: https://github.com/nebrass/hve-spielberg/compare/v0.0.2...v0.0.3
 [0.0.2]: https://github.com/nebrass/hve-spielberg/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/nebrass/hve-spielberg/releases/tag/v0.0.1

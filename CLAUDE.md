@@ -44,7 +44,7 @@ SKILL.md (orchestrator)
 - `scripts/generate_voiceover.py` → ElevenLabs API + optional Whisper transcription (Phase 5)
 - `scripts/search_music.py` → Freesound API for CC music (Phase 5)
 
-`templates/` files are copied into generated projects. `patterns/` files are referenced for visual techniques — `metallic-swoosh.md` documents *why* clipPath transitions are banned (black-sliver artifacts).
+`templates/` files are copied into generated projects. `patterns/` files are referenced for visual techniques — `metallic-swoosh.md` documents *why* clipPath transitions are banned (black-sliver artifacts), and `cli-terminal-capture.md` documents the `asciinema` + `agg` workflow for the optional real-terminal-clip path (the dependency-free authored-terminal path uses `templates/scene-terminal.html`; the asciinema clip path uses `templates/scene-terminal-clip.html`).
 
 ## Working with the skill scripts
 
@@ -72,6 +72,7 @@ These are enforced verbally in the `## DON'Ts` section of `SKILL.md`. If you mod
 - **Never animate `display`, `visibility`, or call `.play()` inside a timeline.** Breaks HyperFrames' deterministic seek; use `opacity` + `pointer-events`.
 - **Never animate `<img>` dimensions directly.** Wrap the `<img>` in a non-timed `<div>` and animate the wrapper's `transform`. Direct dimension tweens trigger layout recompute that breaks deterministic seek.
 - **Never use `tl.from()` for opacity tweens.** GSAP records the end-state at registration; if the CSS rest is `opacity:0` the recorded end is `opacity:0` (the tween goes nowhere), and under stagger later instances re-hide elements earlier ones revealed. Always use `tl.fromTo(target, {opacity:0,...}, {opacity:1,...}, pos)`.
+- **Never ship a bare `<video>` in a clip scene.** The runtime only frame-syncs videos carrying `data-start`; with 2+ clip scenes bare videos cross-route (wrong footage / black) while every gate passes green. The explicit contract is `id` + `data-start="0"` + `data-duration` (loader's crossfade-extended window, not the bare clip length) + `data-media-start` (storyboard `Clip in`) + `data-track-index="0"` — see `workflows/phase-3-design.md` § Clip scene.
 
 ## Common edits
 
@@ -79,6 +80,12 @@ These are enforced verbally in the `## DON'Ts` section of `SKILL.md`. If you mod
 - **Change phase logic** → edit the relevant `workflows/phase-N-*.md`; update the prerequisite list in `SKILL.md` if a new required file is introduced.
 - **Adjust prerequisite checks** → the `## Prerequisites` block in `SKILL.md` (runs at skill entry).
 - **Bump skill metadata** → frontmatter at top of `SKILL.md` (especially `allowed-tools` if a new MCP tool is needed).
+- **Bump the GSAP version** → the CDN `<script>` tags carry a Subresource Integrity hash (`integrity="sha384-…" crossorigin="anonymous"`), pinned to `gsap@3.14.2`. Changing the version *requires* recomputing the hash, or the script is blocked and every scene renders without animation (caught by `npx hyperframes validate` in Phase 4/5). Update **all** occurrences together — `templates/scene-*.html`, the skeletons in `workflows/phase-3-design.md` + `workflows/phase-4-production.md`, and every `example/**/*.html`:
+  ```bash
+  V=3.x.y   # new version
+  H="sha384-$(curl -sL https://cdn.jsdelivr.net/npm/gsap@$V/dist/gsap.min.js | openssl dgst -sha384 -binary | base64)"
+  # then replace src=…/gsap@$V/… and integrity="$H" in every file above (keep them in lock-step)
+  ```
 
 ## Installation paths users invoke
 

@@ -153,7 +153,7 @@ Screenshots stay at `public/screenshots/` — referenced from `index.html` via r
     <!-- … etc … -->
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js" integrity="sha384-sG0Hv1tP1lZCk9KQmrIbY/XNwi+OY84GQqhMscbnsoBFqAz8KNCil1kvfL3Hbbk2" crossorigin="anonymous"></script>
   <script>
     // The root composition needs a registered timeline too, even if it only
     // hosts inter-scene transitions and ambient effects.
@@ -190,6 +190,18 @@ Use the `hyperframes` skill for the composition authoring rules — the most imp
   `(out − in) / speed` (from the storyboard `Clip in/out` + `Speed`). Set the
   scene window from the footage — do **not** stretch a clip scene to fit VO; VO
   is written to fit the footage-derived window in Phase 5.
+- **Each clip scene's inner `<video>` carries its own timing** — `id` + `data-start="0"`
+  + `data-duration` + `data-media-start` + `data-track-index="0"`. The runtime
+  only frame-syncs videos that have `data-start`; without it the clip isn't synced and, with
+  2+ clip scenes, cross-routes (one scene plays another's footage, another plays black). The
+  `scene-clip.html` / `scene-terminal-clip.html` archetypes pre-wire this — keep it.
+  - The inner video's `data-duration` = the **loader's full window incl. the 0.4s crossfade
+    extension** (Step 4.5), NOT the bare clip length — the runtime hides an expired track
+    (`visibility:hidden`), so a video that ends at the nominal length blanks the frame during
+    every crossfade out of the scene.
+  - `data-media-start` = the storyboard's `Clip in` (trim offset, seconds; `0` if whole).
+    Omitting it plays the source from `t=0`, discards the `Clip in/out` trim, and desyncs the
+    footage from Phase 5's clip-audio window (`CIN`/`COUT`, Step 5.3a).
 - A rigid real-time clip (e.g. a live command run) sets its own budget: keep it at
   `Speed: 1.0` and size the scene to the real length; speed-ramp **only** explicitly
   marked dead air.
@@ -233,6 +245,19 @@ All gates take the project **directory** (they resolve `index.html` inside it), 
 `--samples` controls how many timestamps `inspect` seeks to. Typical convention: `--samples 10` for 30s spots, `--samples 15` for denser transition-heavy cuts. Use `--at 1.5,4,7.25` instead if you want to audit specific hero frames.
 
 All three must pass cleanly (or report only overflows you've consciously marked intentional).
+
+### Hero-frame content check (mandatory — gates can't see "wrong content")
+
+`lint`, `inspect`, and `validate` are mechanical: structure, layout overflow, contrast. **None of them judges whether each scene is showing the *right* content** — a clip wired to the wrong footage or a stale `<img src>` passes all three GREEN (this is exactly how the bare-`<video>` clip cross-route shipped unnoticed). Catch it here, cheaply, *before* the full render in Phase 5.
+
+Re-run `inspect` at the **midpoint of each scene** (not a uniform sweep) so every scene contributes one readable hero frame:
+
+```bash
+# Midpoints from the storyboard scene windows, e.g. scene 0 spans 0–5 → 2.5, etc.
+npx hyperframes inspect . --at 2.5,7,12,18,24,30
+```
+
+Then **Read each `.hyperframes/inspect/*.png`** and confirm, scene by scene, that the frame shows what the storyboard calls for — correct screenshot, correct clip footage, correct copy. This re-uses the headless-Chrome frames `inspect` already writes (no `ffmpeg`, no rendered MP4 needed — the render doesn't exist until Phase 5). Do not advance until every scene's hero frame matches its storyboard intent.
 
 Ask:
 
