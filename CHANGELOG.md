@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Phase 5 music mix now sits the soundtrack under the voice as a ducked bed.**
+  The static `volume=0.22` blend in `workflows/phase-5-audio.md` is replaced with:
+  music normalized to a known base (`loudnorm I=-30`), EQ space carved for speech
+  (`highpass=100` + `-3 dB @ 2.5 kHz`), and **sidechain ducking** keyed off the
+  voiceover so the music dips under speech and breathes back in the gaps. Mastered
+  with a peak limiter (`alimiter`, ~-1 dBFS) while the voiceover's -16 LUFS
+  normalization carries loudness — a dynamic `loudnorm` master was rejected
+  because it rides gain and reverses the duck. `aresample` guards keep
+  mismatched-rate sources working through `amix`. `example/README.md` updated to
+  match.
+
+### Fixed
+
+- **True-peak ceiling breach in the audio master.** The old `alimiter=limit=0.95`
+  could leave the final mix above the -1 dBTP target (measured -0.3 dBFS); the new
+  master lands well under it (~-3.8 dBFS). The Step 5.3a clip-audio re-master is
+  aligned to the same ceiling.
+
 ## [0.0.3] - 2026-06-08
 
 Added a professional, skill-driven asciinema + agg CLI recording path so

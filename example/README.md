@@ -23,7 +23,7 @@ Every *input* artifact lives in this directory — it's the project's primary de
 | `voiceover.py` | 5 | ElevenLabs TTS (Matilda) + `npx hyperframes transcribe` verification + auto-pad to VIDEO_DURATION |
 | `voiceover.mp3` | 5 | Generated 60s voiceover (5 sections with silence padding) — gitignored, regenerable |
 | `background-music.mp3` | 5 | "Unpretentious Reveal" by SondreDrakensson (Freesound, CC-BY) — gitignored, fetch via Step 5.2 |
-| `voiceover-with-music.mp3` | 5 | ffmpeg-mixed final audio with loudnorm + amix + alimiter — gitignored, regenerable |
+| `voiceover-with-music.mp3` | 5 | ffmpeg-mixed final audio: music normalized + EQ'd + sidechain-ducked under the voice, peak-limited to ≈-1 dBFS (lands ≈-16 LUFS) — gitignored, regenerable |
 | `out/final.mp4` | 5 | **The rendered video.** `npx hyperframes render` output — not committed; regenerable build artifact (watch the demo on YouTube, or regenerate with the steps below). |
 | `CREDITS.md` | — | CC-BY attribution for the music track + voiceover provenance |
 
@@ -57,9 +57,13 @@ ffmpeg -y -i voiceover.mp3 \
   voiceover-normalized.mp3
 ffmpeg -y -i voiceover-normalized.mp3 -i background-music.mp3 \
   -filter_complex "
-    [1:a]atrim=0:60,volume=0.22,afade=t=in:st=0:d=2,afade=t=out:st=57:d=3[music];
-    [0:a][music]amix=inputs=2:duration=first:dropout_transition=0:normalize=0,
-                alimiter=limit=0.95[out]" \
+    [1:a]atrim=0:60,loudnorm=I=-30:TP=-3:LRA=11,
+         highpass=f=100,equalizer=f=2500:t=q:w=1:g=-3,
+         afade=t=in:st=0:d=2,afade=t=out:st=56:d=4,aresample=44100[music];
+    [0:a]aresample=44100,asplit=2[vo][key];
+    [music][key]sidechaincompress=threshold=0.05:ratio=3:attack=150:release=900[ducked];
+    [vo][ducked]amix=inputs=2:duration=first:dropout_transition=0:normalize=0,
+                alimiter=limit=0.89,aresample=44100[out]" \
   -map "[out]" -c:a libmp3lame -q:a 2 voiceover-with-music.mp3
 
 # 5. Run quality gates + render
