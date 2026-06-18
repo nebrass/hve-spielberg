@@ -247,25 +247,64 @@ ffmpeg -y -i voiceover.mp3 -af "loudnorm=I=-16:TP=-1.5:LRA=11" voiceover-normali
 
 ### Mix music (if using background music)
 
+The music is a **subtle bed under the voice**, not a soundtrack — it should be *felt more than
+heard* while words play, and only noticeable in its absence. Three things make it behave:
+(1) normalize the music to a **known base level** so the balance doesn't depend on how hot the
+source file happens to be, (2) **EQ space** around the voice, and (3) **sidechain-duck the music
+under the voiceover** so it dips while words play and breathes back in the gaps.
+
 ```bash
-# DURATION = video length in seconds (from Phase 1 / project-plan.md);
-# FADE_OUT_START = DURATION - 3
+# DURATION = video length in seconds (from Phase 1 / project-plan.md).
+# Fade-out runs 4s (3–5s is the polished range); never cut the music abruptly.
 DURATION=60                                # ← replace with your video duration
-FADE_OUT_START=$((DURATION - 3))
+FADE_OUT_START=$((DURATION - 4))
 
 ffmpeg -y -i voiceover-normalized.mp3 -i background-music.mp3 \
   -filter_complex "
     [1:a]atrim=0:${DURATION},
-         volume=0.22,
+         loudnorm=I=-30:TP=-3:LRA=11,
+         highpass=f=100,
+         equalizer=f=2500:t=q:w=1:g=-3,
          afade=t=in:st=0:d=2,
-         afade=t=out:st=${FADE_OUT_START}:d=3[music];
-    [0:a][music]amix=inputs=2:duration=first:dropout_transition=0:normalize=0,
-                alimiter=limit=0.95[out]" \
+         afade=t=out:st=${FADE_OUT_START}:d=4,
+         aresample=44100[music];
+    [0:a]aresample=44100,asplit=2[vo][key];
+    [music][key]sidechaincompress=threshold=0.05:ratio=3:attack=150:release=900[ducked];
+    [vo][ducked]amix=inputs=2:duration=first:dropout_transition=0:normalize=0,
+                alimiter=limit=0.89,
+                aresample=44100[out]" \
   -map "[out]" -c:a libmp3lame -q:a 2 \
   voiceover-with-music.mp3
 ```
 
-**Critical:** `amix` defaults to `normalize=1`, which divides each input by the number of inputs (a hidden -6dB on every track). With music already attenuated to 0.22, that double-cut leaves music near-inaudible. Always pass `normalize=0` and rely on `alimiter` for peak control.
+What each stage does — tune by ear, the numbers are starting points, not targets:
+
+- **`loudnorm=I=-30` (music base level)** — normalizes the bed to ~-30 LUFS, ~14 LU under the
+  -16 LUFS voice, so the mix no longer depends on the track's mastered level. This replaces the
+  old fixed `volume=0.22`, which scaled an *un-normalized* download and gave unpredictable
+  loudness. If the music vanishes under speech, raise toward -28/-26; if it competes, lower toward -32.
+- **`highpass=f=100` + `equalizer=f=2500…g=-3` (music EQ)** — strips sub-100 Hz rumble (product
+  demos rarely need deep bass) and dips ~3 dB around 2.5 kHz to carve room for speech clarity.
+- **`sidechaincompress` keyed by the voice (`[key]`)** — the core move: the music ducks ~3–6 dB
+  whenever the voiceover plays (attack 150 ms, release 900 ms = smooth, not pumping) and returns
+  in pauses. Same filter the clip-audio path uses in Step 5.3a, here applied to the *music* with
+  the *voice* as the trigger. If it pumps, lower `ratio` or lengthen `release`; if the first
+  words are masked, drop `attack` toward 100.
+- **`alimiter=limit=0.89` (master ≈ -1 dBFS ceiling)** — a peak limiter, *not* a loudness
+  normalizer. The voiceover is already at -16 LUFS (normalize step) and dominates the mix, so a
+  -30 LUFS bed only nudges integrated loudness ~+0.2 LU — the mix lands ≈-15.8 LUFS on its own,
+  in-spec. This matches the guide's master chain ("limiter, ceiling -1 dB").
+  **Do not add a dynamic `loudnorm` master here.** Single-pass `loudnorm` rides gain, so it boosts
+  the bed in the intro, outro, and every VO pause (chasing -16 when only the quiet music is present),
+  which *undoes the sidechain duck and fights the fades* — verified: with a dynamic master the music
+  measures **louder** under speech than in the gaps. If you need to hit -16 LUFS more exactly,
+  correct with a **constant** gain after validation (below), never a dynamic pass.
+- **`aresample=44100`** — the music-branch `loudnorm` can internally switch to 192 kHz; the explicit
+  resamples keep the `sidechaincompress`/`amix` inputs rate-matched and the MP3 encoder happy.
+
+**Critical:** keep `amix … normalize=0`. The default `normalize=1` divides each input by the input
+count (a hidden -6 dB per track), which would gut the already-quiet bed. Set level via the music
+base (`loudnorm=I=-30`) plus the VO's own -16 LUFS normalization, not `amix` normalization.
 
 ### No-music path (voiceover only)
 
@@ -283,10 +322,20 @@ cp voiceover-normalized.mp3 voiceover-with-music.mp3
 
 Then proceed to Step 5.4 — the render step doesn't care whether music was mixed in or not, as long as `voiceover-with-music.mp3` exists and is the full composition duration.
 
-Validate with `ebur128`: integrated loudness should land around -16 LUFS, true peak under -0.5 dBFS.
+Validate with `ebur128`: integrated loudness should land around -16 LUFS, and the reported true peak should come in at or under -1 dBTP. `alimiter` caps *sample* peaks, not inter-sample/true peaks, so treat -1 dBTP as a target to **verify** — if `ebur128` reports a true peak above -1 dBTP, lower the Step 5.3 limiter ceiling (e.g. `alimiter=limit=0.79`, ≈ -2 dBFS) and re-render.
 
 ```bash
 ffmpeg -hide_banner -i voiceover-with-music.mp3 -af ebur128=peak=true -f null - 2>&1 | tail -16
+```
+
+If integrated loudness lands outside -16 ±1.5 LUFS (e.g. a sparse, pause-heavy VO drags it low),
+nudge it with a **constant** gain — `volume=<delta>dB` shifts the whole mix uniformly, so it
+preserves the duck and the fades, unlike a dynamic `loudnorm` — then re-cap the peak:
+
+```bash
+ffmpeg -y -i voiceover-with-music.mp3 -af "volume=1.5dB,alimiter=limit=0.89" \
+  -c:a libmp3lame -q:a 2 voiceover-with-music.fixed.mp3
+mv voiceover-with-music.fixed.mp3 voiceover-with-music.mp3
 ```
 
 ## Step 5.3a: Clip-own audio (opt-in)
@@ -314,7 +363,7 @@ ffmpeg -y -i voiceover-with-music.mp3 -i clip-audio-03.mp3 \
     [1:a]asplit=2[clip][key];
     [0:a][key]sidechaincompress=threshold=0.05:ratio=8:attack=20:release=300[ducked];
     [ducked][clip]amix=inputs=2:duration=first:dropout_transition=0:normalize=0,
-                  alimiter=limit=0.95[out]" \
+                  alimiter=limit=0.89[out]" \
   -map "[out]" -c:a libmp3lame -q:a 2 voiceover-with-music.tmp.mp3
 mv voiceover-with-music.tmp.mp3 voiceover-with-music.mp3
 ```
@@ -323,7 +372,7 @@ Repeat per opt-in clip (each pass overwrites the canonical file). Re-validate:
 ```bash
 ffmpeg -hide_banner -i voiceover-with-music.mp3 -af ebur128=peak=true -f null - 2>&1 | tail -16
 ```
-Expected: integrated loudness ≈ -16 LUFS, true peak < -0.5 dBFS; the ducked window is audibly quieter under the clip's sound.
+Expected: integrated loudness ≈ -16 LUFS, with true peak at or under -1 dBTP; the ducked window is audibly quieter under the clip's sound. As in Step 5.3, `alimiter` caps sample peaks — verify the true peak with `ebur128` and lower the limiter ceiling if it reports above -1 dBTP.
 
 ## Step 5.4: Final Render
 
