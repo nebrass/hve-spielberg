@@ -23,8 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **True-peak ceiling breach in the audio master.** The old `alimiter=limit=0.95`
-  could leave the final mix above the -1 dBTP target (measured -0.3 dBFS); the new
-  master lands well under it (~-3.8 dBFS). The Step 5.3a clip-audio re-master is
+  could leave the final mix above the -1 dBTP target (measured true peak -0.3 dBTP); the
+  new master lands well under it (~-3.8 dBTP). The Step 5.3a clip-audio re-master is
   aligned to the same ceiling.
 
 ## [0.0.3] - 2026-06-08

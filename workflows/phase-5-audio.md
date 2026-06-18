@@ -322,7 +322,7 @@ cp voiceover-normalized.mp3 voiceover-with-music.mp3
 
 Then proceed to Step 5.4 — the render step doesn't care whether music was mixed in or not, as long as `voiceover-with-music.mp3` exists and is the full composition duration.
 
-Validate with `ebur128`: integrated loudness should land around -16 LUFS, true peak at or under -1 dBTP.
+Validate with `ebur128`: integrated loudness should land around -16 LUFS, and the reported true peak should come in at or under -1 dBTP. `alimiter` caps *sample* peaks, not inter-sample/true peaks, so treat -1 dBTP as a target to **verify** — if `ebur128` reports a true peak above -1 dBTP, lower the Step 5.3 limiter ceiling (e.g. `alimiter=limit=0.79`, ≈ -2 dBFS) and re-render.
 
 ```bash
 ffmpeg -hide_banner -i voiceover-with-music.mp3 -af ebur128=peak=true -f null - 2>&1 | tail -16
@@ -372,7 +372,7 @@ Repeat per opt-in clip (each pass overwrites the canonical file). Re-validate:
 ```bash
 ffmpeg -hide_banner -i voiceover-with-music.mp3 -af ebur128=peak=true -f null - 2>&1 | tail -16
 ```
-Expected: integrated loudness ≈ -16 LUFS, true peak at or under -1 dBTP; the ducked window is audibly quieter under the clip's sound.
+Expected: integrated loudness ≈ -16 LUFS, with true peak at or under -1 dBTP; the ducked window is audibly quieter under the clip's sound. As in Step 5.3, `alimiter` caps sample peaks — verify the true peak with `ebur128` and lower the limiter ceiling if it reports above -1 dBTP.
 
 ## Step 5.4: Final Render
 
