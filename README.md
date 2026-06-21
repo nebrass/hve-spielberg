@@ -1,6 +1,6 @@
 # hve-spielberg
 
-**AI-powered video production pipeline for Claude Code.** From design thinking to final render — 6 automated phases that turn your app into a polished promo, showcase, or tutorial video.
+**AI-powered video production pipeline for Claude Code and GitHub Copilot CLI.** From design thinking to final render — 6 automated phases that turn your app into a polished promo, showcase, or tutorial video.
 
 ```
 /hve-spielberg
@@ -24,7 +24,7 @@ Everything in [`example/`](example/) is the actual artifact — not a staged moc
 
 ## What It Does
 
-hve-spielberg is a Claude Code skill that orchestrates end-to-end video production:
+hve-spielberg is an agent skill (Claude Code / GitHub Copilot CLI) that orchestrates end-to-end video production:
 
 1. **Understands your product** through design thinking (empathize, define, ideate)
 2. **Builds a narrative** with scene storyboarding and emotional arc
@@ -67,7 +67,7 @@ Each phase has a user-approval checkpoint before proceeding to the next.
 | Python 3.10+ | Yes | [python.org](https://python.org) |
 | ffmpeg | Yes | `brew install ffmpeg` / `apt install ffmpeg` |
 | `chrome-headless-shell` | Yes | Used by `npx hyperframes render` for frame capture. System Chrome causes 120s render hangs. Install once: `npx puppeteer browsers install chrome-headless-shell` (one-time, ~170MB, cached). Verify with `npx hyperframes doctor`. |
-| Chrome DevTools MCP | Yes | Configured in Claude Code settings |
+| Chrome DevTools MCP | Yes | Configured in your agent's MCP settings (Claude Code or GitHub Copilot CLI) |
 | `ELEVENLABS_API_KEY` | Recommended | [elevenlabs.io](https://elevenlabs.io) — higher-quality TTS. If unset, Phase 5 falls back to `npx hyperframes tts` (local Kokoro-82M, no key, lower quality). |
 | `FREESOUND_API_KEY` | No | [freesound.org/apiv2/apply](https://freesound.org/apiv2/apply/) — enables CC music search |
 | Whisper | Recommended | `pip install openai-whisper` — voiceover timing verification |
@@ -77,15 +77,17 @@ Each phase has a user-approval checkpoint before proceeding to the next.
 
 ### Required Skills
 
-hve-spielberg depends on two **Claude Code skills** plus the **`hyperframes` npm package** (these are separate — the skills provide authoring prompts; the npm package provides the `hyperframes` CLI):
+hve-spielberg depends on two **companion agent skills** plus the **`hyperframes` npm package** (these are separate — the skills provide authoring prompts; the npm package provides the `hyperframes` CLI). Install the companion skills into the same skills home as this skill — `~/.claude/skills/` for Claude Code or `~/.copilot/skills/` for GitHub Copilot CLI:
 
 | Dependency | Type | Purpose | Install |
 |-----------|------|---------|---------|
-| `hyperframes` skill | Claude Code skill | Authoring rules for HTML/GSAP compositions, sub-comps, transitions, captions | Install the HyperFrames skill into `~/.claude/skills/hyperframes/` |
-| `gsap` skill | Claude Code skill | Animation choreography reference (eases, timelines, stagger) | Recommended companion to the hyperframes skill |
+| `hyperframes` skill | Agent skill | Authoring rules for HTML/GSAP compositions, sub-comps, transitions, captions | Install the HyperFrames skill into `~/.claude/skills/hyperframes/` (Claude Code) or `~/.copilot/skills/hyperframes/` (Copilot CLI) |
+| `gsap` skill | Agent skill | Animation choreography reference (eases, timelines, stagger) | Recommended companion to the hyperframes skill |
 | `hyperframes` npm package | CLI | `init`, `add` (pull catalog blocks, Phase 4), `lint`, `preview`, `inspect`, `validate`, `render`, `doctor` (render diagnostics), `transcribe` (Phase 5's preferred timing verifier, with standalone Whisper as fallback), `tts` (no-key fallback when `ELEVENLABS_API_KEY` is unset) | `npx hyperframes <command>` (auto-fetches; package: [`hyperframes`](https://www.npmjs.com/package/hyperframes), repo: [github.com/heygen-com/hyperframes](https://github.com/heygen-com/hyperframes)) |
 
 ## Installation
+
+The skill works with both **Claude Code** (`~/.claude/skills/`) and **GitHub Copilot CLI** (`~/.copilot/skills/`). Pick the skills home for your agent.
 
 ### Option 1: Skills CLI (Recommended)
 
@@ -93,18 +95,28 @@ hve-spielberg depends on two **Claude Code skills** plus the **`hyperframes` npm
 npx skills add nebrass/hve-spielberg
 ```
 
-### Option 2: Manual
+### Option 2: Manual (git clone)
 
 ```bash
+# Claude Code
 git clone https://github.com/nebrass/hve-spielberg.git ~/.claude/skills/hve-spielberg
+
+# GitHub Copilot CLI
+git clone https://github.com/nebrass/hve-spielberg.git ~/.copilot/skills/hve-spielberg
 ```
+
+In Copilot CLI, run `/skills` to confirm the skill is loaded.
 
 ### Option 3: Git Submodule / Direct Copy
 
-Copy the skill files directly into any project's `.claude/skills/` directory:
+Copy the skill files directly into any project's skills directory (`.claude/skills/` for Claude Code, `.copilot/skills/` for Copilot CLI):
 
 ```bash
+# Claude Code
 cp -r ~/.claude/skills/hve-spielberg my-project/.claude/skills/hve-spielberg
+
+# GitHub Copilot CLI
+cp -r ~/.copilot/skills/hve-spielberg my-project/.copilot/skills/hve-spielberg
 ```
 
 ## Updating
@@ -115,11 +127,12 @@ Already installed an older version? Update to the latest `main`:
 # Installed via the Skills CLI (npx skills add …):
 npx skills update hve-spielberg     # alias: upgrade · -g global · -p project · -y skip the scope prompt
 
-# Installed via a manual git clone (~/.claude/skills/hve-spielberg):
-cd ~/.claude/skills/hve-spielberg && git pull
+# Installed via a manual git clone:
+cd ~/.claude/skills/hve-spielberg && git pull     # Claude Code
+cd ~/.copilot/skills/hve-spielberg && git pull    # GitHub Copilot CLI
 ```
 
-Then **restart Claude Code** so the updated `SKILL.md` reloads — skills are read at session start, so file changes don't apply mid-session. Run `npx skills list` to see what's installed and where.
+Then **restart your agent** (Claude Code or GitHub Copilot CLI) so the updated `SKILL.md` reloads — skills are read at session start, so file changes don't apply mid-session. Run `npx skills list` to see what's installed and where.
 
 ## Quick Start
 
@@ -133,6 +146,7 @@ Then **restart Claude Code** so the updated `SKILL.md` reloads — skills are re
    ```
    /hve-spielberg
    ```
+   On **Claude Code** this is a slash command. On **GitHub Copilot CLI**, invoke it by name or intent (e.g. "use hve-spielberg to make a promo video"); run `/skills` to confirm it's loaded. Append the same arguments either way (e.g. `--mode continue`).
 
 3. **Follow the prompts.** Phase 0 → 5 is interactive; each phase has a user-approval checkpoint before advancing. The discovery questions include:
    - **Mode**: Promo, Showcase, or Tutorial
@@ -207,7 +221,7 @@ my-video-project/
 ```
 hve-spielberg/
 ├── SKILL.md                       # Orchestrator entry point (read first)
-├── CLAUDE.md                      # Codebase guide for Claude Code sessions editing this repo
+├── CLAUDE.md                      # Codebase guide for agent sessions (Claude Code / Copilot CLI) editing this repo
 ├── workflows/                     # The 6-phase pipeline, one file per phase
 │   ├── phase-0-discovery.md
 │   ├── phase-1-storytelling.md

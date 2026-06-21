@@ -13,7 +13,10 @@ Pick the most specific path that Phase 1 Step 1.2 set up.
 **If Phase 1 recorded `design_system: <slug>`** in `project-plan.md` (one of `stripe`, `linear-app`, `apple`, `notion`, `vercel`, `airbnb`, `github`, `cal`, `arc`, `bento`), the brand specification ships with the skill. Copy it straight into the project root:
 
 ```bash
-SKILL_DIR=~/.claude/skills/hve-spielberg   # or .claude/skills/hve-spielberg for per-project install
+# Resolve the skill install dir across runtimes (Claude Code / GitHub Copilot CLI),
+# global or per-project:
+SKILL_DIR=$(for d in ~/.claude/skills/hve-spielberg ~/.copilot/skills/hve-spielberg \
+  .claude/skills/hve-spielberg .copilot/skills/hve-spielberg; do [ -d "$d" ] && echo "$d" && break; done)
 cp "$SKILL_DIR/design-systems/<slug>/DESIGN.md" ./DESIGN.md
 ```
 

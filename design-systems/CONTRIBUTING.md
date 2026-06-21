@@ -44,7 +44,7 @@ $EDITOR design-systems/<slug>/DESIGN.md
 # 4. Add a row to the catalog table in design-systems/README.md
 
 # 5. Add an option to Phase 1 Step 1.2 in workflows/phase-1-storytelling.md
-#    (the second AskUserQuestion block, "Which design system?")
+#    (the second question block, "Which design system?")
 
 # 6. Verify the slug appears in all three:
 #    - templates/project-plan.md `Design system:` enum

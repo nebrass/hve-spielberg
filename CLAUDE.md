@@ -1,10 +1,10 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) — and GitHub Copilot CLI, which also reads `CLAUDE.md` — when working with code in this repository.
 
 ## What this repo is
 
-This repo **is a Claude Code skill** (`hve-spielberg`), not a typical application. The "source" is prompt content (markdown) plus two Python helper scripts. There is no build system, no test suite, no lint config — the skill is consumed by future Claude Code sessions that invoke `/hve-spielberg <project-dir>`.
+This repo **is an agent skill** (`hve-spielberg`) that runs on both **Claude Code** and **GitHub Copilot CLI**, not a typical application. The "source" is prompt content (markdown) plus two Python helper scripts. There is no build system, no test suite, no lint config — the skill is consumed by future agent sessions that invoke `/hve-spielberg <project-dir>` (a slash command on Claude Code; invoked by name/intent on Copilot CLI). The `SKILL.md` frontmatter uses the Claude Code skill schema; Copilot CLI loads the skill from `name`/`description` and harmlessly ignores the Claude-only fields.
 
 The renderer is **HyperFrames** (HTML + GSAP, rendered via headless Chromium). React/Remotion are no longer used.
 
@@ -91,13 +91,21 @@ These are enforced verbally in the `## DON'Ts` section of `SKILL.md`. If you mod
 
 ```bash
 npx skills add nebrass/hve-spielberg                      # via Skills CLI
+
+# Claude Code
 git clone https://github.com/nebrass/hve-spielberg.git \
   ~/.claude/skills/hve-spielberg                          # manual
 cp -r ~/.claude/skills/hve-spielberg \
   my-project/.claude/skills/hve-spielberg                 # per-project copy
+
+# GitHub Copilot CLI
+git clone https://github.com/nebrass/hve-spielberg.git \
+  ~/.copilot/skills/hve-spielberg                         # manual
+cp -r ~/.copilot/skills/hve-spielberg \
+  my-project/.copilot/skills/hve-spielberg                # per-project copy
 ```
 
-When testing skill changes locally, the global install path is `~/.claude/skills/hve-spielberg/`.
+When testing skill changes locally, the global install path is `~/.claude/skills/hve-spielberg/` (Claude Code) or `~/.copilot/skills/hve-spielberg/` (GitHub Copilot CLI).
 
 ## Git / release conventions
 

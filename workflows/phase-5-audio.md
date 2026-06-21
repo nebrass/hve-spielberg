@@ -75,7 +75,10 @@ would bake this project's config into every future project, and two projects
 could not run concurrently.
 
 ```bash
-SKILL_DIR=~/.claude/skills/hve-spielberg   # or .claude/skills/hve-spielberg for per-project install
+# Resolve the skill install dir across runtimes (Claude Code / GitHub Copilot CLI),
+# global or per-project:
+SKILL_DIR=$(for d in ~/.claude/skills/hve-spielberg ~/.copilot/skills/hve-spielberg \
+  .claude/skills/hve-spielberg .copilot/skills/hve-spielberg; do [ -d "$d" ] && echo "$d" && break; done)
 cp "$SKILL_DIR/scripts/generate_voiceover.py" ./voiceover.py
 ```
 

@@ -22,6 +22,27 @@ You also understand **design thinking** — you don't just make videos, you firs
 
 Your creative instincts guide every decision. The guidelines below are suggestions, not rules.
 
+## Runtime Compatibility
+
+This skill is **agent-agnostic** — it runs on both **Claude Code** and **GitHub Copilot CLI**.
+A few conventions in this file and the phase workflows are written once and mapped to whatever
+runtime you are on:
+
+- **Frontmatter** (`allowed-tools`, `user-invocable`, `argument-hint`) follows the Claude Code
+  skill schema. GitHub Copilot CLI loads this skill from the `name`/`description` fields and
+  harmlessly ignores the rest — there is nothing to change.
+- **Asking the user a question.** Wherever a `{"questions": [...]}` JSON block appears, treat it
+  as a runtime-neutral schema: render each question as a **native multiple-choice prompt** using
+  whatever selection tool your runtime provides — `AskUserQuestion` on Claude Code, `ask_user` on
+  GitHub Copilot CLI. `multiSelect: true` means allow multiple selections. Never print the raw
+  JSON to the user.
+- **Loading a companion skill.** Wherever you see `Skill(<name>)` (e.g. `Skill(hyperframes)`),
+  load that skill the way your runtime does it — the `Skill` tool on Claude Code, or read the
+  companion skill's `SKILL.md` (auto-discovered alongside this one) on GitHub Copilot CLI.
+- **Skill install home.** Companion skills (`hyperframes`, `gsap`) live next to this skill:
+  `~/.claude/skills/<name>/` on Claude Code, `~/.copilot/skills/<name>/` on GitHub Copilot CLI.
+  Prereq checks below probe **both** locations.
+
 ## Prerequisites
 
 Check required tools and skills:
@@ -37,8 +58,12 @@ echo "asciinema+agg+timeout (CLI clip recording): optional — $(command -v asci
 ```
 
 ```bash
-ls ~/.claude/skills/hyperframes/SKILL.md 2>/dev/null && echo "hyperframes skill: ✓" || echo "hyperframes skill: ✗ — install the Claude Code skill (authoring prompts)"
-ls ~/.claude/skills/gsap/SKILL.md 2>/dev/null && echo "gsap skill: ✓"        || echo "gsap skill: ○ — recommended companion to hyperframes for animation choreography"
+for home in ~/.claude/skills ~/.copilot/skills; do
+  [ -f "$home/hyperframes/SKILL.md" ] && { echo "hyperframes skill: ✓ ($home)"; hf=1; break; }
+done; [ -n "$hf" ] || echo "hyperframes skill: ✗ — install the hyperframes skill into ~/.claude/skills/ (Claude Code) or ~/.copilot/skills/ (GitHub Copilot CLI)"
+for home in ~/.claude/skills ~/.copilot/skills; do
+  [ -f "$home/gsap/SKILL.md" ] && { echo "gsap skill: ✓ ($home)"; gs=1; break; }
+done; [ -n "$gs" ] || echo "gsap skill: ○ — recommended companion to hyperframes for animation choreography"
 npx --yes hyperframes --version 2>/dev/null && echo "hyperframes CLI: ✓" || echo "hyperframes CLI: ✗ — npm i -g hyperframes  (or rely on npx; package: hyperframes on npm, repo github.com/heygen-com/hyperframes)"
 ```
 

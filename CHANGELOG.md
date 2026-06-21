@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **GitHub Copilot CLI support — the skill is now agent-agnostic.** `hve-spielberg`
+  runs on both **Claude Code** (`~/.claude/skills/`) and **GitHub Copilot CLI**
+  (`~/.copilot/skills/`). A new **Runtime Compatibility** section in `SKILL.md`
+  documents the runtime-neutral conventions used throughout the workflows:
+  - `{"questions": […]}` interaction blocks are a neutral schema rendered as a native
+    multiple-choice prompt per runtime (`AskUserQuestion` on Claude Code, `ask_user`
+    on Copilot CLI).
+  - `Skill(<name>)` means "load that companion skill the way your runtime does it".
+  - Companion skills (`hyperframes`, `gsap`) and helper scripts are resolved from
+    **both** `~/.claude/skills/` and `~/.copilot/skills/`.
+  - The `SKILL.md` frontmatter keeps the Claude Code skill schema; Copilot CLI loads
+    the skill from `name`/`description` and harmlessly ignores the Claude-only fields.
+  - Prerequisite probes, the Phase 3/5 `SKILL_DIR` resolution, and the `patterns/`
+    references now detect either skills home.
+  - `README.md`, `CLAUDE.md`, and `.github/copilot-instructions.md` document
+    installation and usage for both agents.
+
 ### Changed
 
 - **Phase 5 music mix now sits the soundtrack under the voice as a ducked bed.**

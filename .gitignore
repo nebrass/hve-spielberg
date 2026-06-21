@@ -31,7 +31,7 @@ __pycache__/
 .vscode/
 .idea/
 
-# Claude Code session state (local runtime, not source)
+# Agent session state (local runtime, not source)
 .omo/
 
 # Throwaway render/verify harness — never committed

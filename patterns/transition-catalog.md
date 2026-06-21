@@ -49,7 +49,7 @@ See `workflows/phase-4-production.md` Step 4.2 for how to wire them into the roo
 | `references/transitions/css-grid.md` | Grid Dissolve |
 | `references/transitions/css-other.md` | Gravity Drop, Morph Circle |
 
-All paths are relative to `~/.claude/skills/hyperframes/` (the installed HF skill location).
+All paths are relative to the installed HyperFrames skill location — `~/.claude/skills/hyperframes/` (Claude Code) or `~/.copilot/skills/hyperframes/` (GitHub Copilot CLI).
 
 ## Hard rules (don't skip these)
 

@@ -2,7 +2,7 @@
 
 ## What this repo is
 
-This repo **is a Claude Code skill** (`hve-spielberg`), not a typical application. The "source" is prompt content (markdown) plus two Python helper scripts. There is no build system, no test suite, no lint config — the skill is consumed by future Claude Code sessions that invoke `/hve-spielberg <project-dir>`.
+This repo **is an agent skill** (`hve-spielberg`) that runs on both **GitHub Copilot CLI** and **Claude Code**, not a typical application. The "source" is prompt content (markdown) plus two Python helper scripts. There is no build system, no test suite, no lint config — the skill is consumed by future agent sessions that invoke `/hve-spielberg <project-dir>` (a slash command on Claude Code; invoked by name/intent on Copilot CLI). The `SKILL.md` frontmatter follows the Claude Code skill schema; Copilot CLI loads the skill from its `name`/`description` and harmlessly ignores the Claude-only fields (`allowed-tools`, `user-invocable`, `argument-hint`). See the **Runtime Compatibility** section in `SKILL.md` for how interaction blocks (`{"questions": […]}`), companion-skill loading (`Skill(<name>)`), and skill-home paths map across runtimes — preserve that mapping when editing.
 
 The renderer is **HyperFrames** (HTML + GSAP, rendered via headless Chromium). React/Remotion are **not** used.
 
@@ -38,7 +38,7 @@ SKILL.md (orchestrator)
 **External dependencies the skill calls out to:**
 
 - `mcp__chrome-devtools__*` for app capture (Phase 2)
-- The `hyperframes` Claude Code skill for HTML/GSAP authoring rules (Phases 3 + 4) — distinct from the `hyperframes` npm CLI
+- The `hyperframes` companion agent skill for HTML/GSAP authoring rules (Phases 3 + 4) — distinct from the `hyperframes` npm CLI
 - The `gsap` skill (optional companion) for choreography reference
 - `npx hyperframes` CLI for `init`, `add` (pull catalog blocks, Phase 4), `lint`, `preview`, `inspect`, `validate`, `render`, `doctor` (render-environment diagnostics, Phase 5), `transcribe` (preferred voiceover-timing verifier in Phase 5; falls back to standalone Whisper if unavailable), and `tts` (used in Phase 5 as the no-API-key fallback when `ELEVENLABS_API_KEY` is unset)
 - `mcp__chrome-devtools__screencast_*` + `resize_page` for Phase-2 web-clip capture (experimental, feature-detected — needs `--experimentalScreencast=true`; falls back to screenshots), and optional `asciinema`+`agg` for CLI clip recording (otherwise the authored-terminal path)
@@ -92,13 +92,21 @@ Anti-slop content rules (see `patterns/anti-slop.md`) also matter: no default Ta
 
 ```bash
 npx skills add nebrass/hve-spielberg                      # via Skills CLI
+
+# Claude Code
 git clone https://github.com/nebrass/hve-spielberg.git \
   ~/.claude/skills/hve-spielberg                          # manual
 cp -r ~/.claude/skills/hve-spielberg \
   my-project/.claude/skills/hve-spielberg                 # per-project copy
+
+# GitHub Copilot CLI
+git clone https://github.com/nebrass/hve-spielberg.git \
+  ~/.copilot/skills/hve-spielberg                         # manual
+cp -r ~/.copilot/skills/hve-spielberg \
+  my-project/.copilot/skills/hve-spielberg                # per-project copy
 ```
 
-When testing skill changes locally, the global install path is `~/.claude/skills/hve-spielberg/`.
+When testing skill changes locally, the global install path is `~/.claude/skills/hve-spielberg/` (Claude Code) or `~/.copilot/skills/hve-spielberg/` (GitHub Copilot CLI).
 
 ## Git / release conventions
 
