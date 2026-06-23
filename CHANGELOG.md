@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Phase 5 audio mix and render hardened from a real Copilot CLI end-to-end run.** Two
+  environment fixes verified by rendering the `example/` build to MP4:
+  - The sidechain mix now forces both legs to stereo with
+    `aformat=…:channel_layouts=stereo` (was a bare `aresample=44100`). ElevenLabs and the
+    `hyperframes tts` fallback often emit a **mono** voiceover, and `sidechaincompress` aborts
+    (`Failed to inject frame into filter network`) when the key and music differ in channel
+    layout. Updated in `workflows/phase-5-audio.md` and `example/README.md`.
+  - Documented the WSL2 render path: native render can fail at
+    `Protocol error (Page.captureScreenshot)`; add `--docker` to render in a container, and on
+    machines with ≤8 GB RAM also add `--no-low-memory-mode` (low-memory mode forces the failing
+    screenshot capture). Added to the Phase 5 "Known issues" list and the `example/README.md`
+    render step.
 - **Phase 5 music mix now sits the soundtrack under the voice as a ducked bed.**
   The static `volume=0.22` blend in `workflows/phase-5-audio.md` is replaced with:
   music normalized to a known base (`loudnorm I=-30`), EQ space carved for speech
