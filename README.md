@@ -61,6 +61,8 @@ Each phase has a user-approval checkpoint before proceeding to the next.
 
 ## Prerequisites
 
+> **Quick check:** run `./scripts/check_requirements.sh` to verify everything below in one shot. Add `--fix` to auto-install the user-scoped pieces (companion skills, `chrome-headless-shell`, Whisper); system packages and API keys are printed for you to set up.
+
 | Tool | Required | Installation |
 |------|----------|-------------|
 | Node.js 18+ | Yes | [nodejs.org](https://nodejs.org) |

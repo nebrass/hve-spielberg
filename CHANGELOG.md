@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`scripts/check_requirements.sh` — toolchain doctor.** Verifies every prerequisite
+  (Node ≥18, Python ≥3.10, ffmpeg/ffprobe, `chrome-headless-shell` via `hyperframes doctor`,
+  the `hyperframes` CLI, the `hyperframes`/`gsap` companion skills across all `$SKILL_HOMES`,
+  and the ELEVENLABS/FREESOUND env vars). Reports with ✓/○/✗ and per-OS install hints
+  (macOS/Linux/WSL2 detected). `--fix` auto-installs the user-scoped pieces (companion skills via
+  `npx skills add`, `chrome-headless-shell`, `pip --user openai-whisper`) and **prints — never
+  runs — sudo/system commands**. Exit 1 if any required item is missing. On WSL it flags the
+  `--docker` render path.
 - **GitHub Copilot CLI support — the skill is now agent-agnostic.** `hve-spielberg`
   runs on both **Claude Code** (`~/.claude/skills/`) and **GitHub Copilot CLI**
   (`~/.copilot/skills/`). A new **Runtime Compatibility** section in `SKILL.md`
