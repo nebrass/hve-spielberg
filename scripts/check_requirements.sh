@@ -34,7 +34,22 @@ for a in "$@"; do
   case "$a" in
     --fix) FIX=1 ;;
     -h|--help)
-      sed -n '2,/^$/p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+      # Self-contained heredoc (not read from "$0"), so --help works when the
+      # script is piped — e.g. `curl … | bash -s -- --help`.
+      cat <<'EOF'
+check_requirements.sh — verify the hve-spielberg toolchain and (optionally) fix
+what can be safely auto-installed.
+
+Usage:
+  ./scripts/check_requirements.sh          # report only (no changes)
+  ./scripts/check_requirements.sh --fix    # auto-install user-scoped deps;
+                                           # print (never run) sudo/system commands
+  ./scripts/check_requirements.sh --help
+
+Exit status: 0 if every REQUIRED item is satisfied, 1 if any is missing, 2 on an unknown argument.
+Recommended/optional gaps never fail the run — they only warn.
+EOF
+      exit 0 ;;
     *) echo "unknown arg: $a (try --help)" >&2; exit 2 ;;
   esac
 done

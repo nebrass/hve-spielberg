@@ -63,6 +63,23 @@ Each phase has a user-approval checkpoint before proceeding to the next.
 
 > **Quick check:** run `./scripts/check_requirements.sh` to verify everything below in one shot. Add `--fix` to auto-install the user-scoped pieces (companion skills, `chrome-headless-shell`, Whisper); system packages and API keys are printed for you to set up.
 
+**No local checkout?** The doctor is self-contained — run it straight from GitHub:
+
+```bash
+# report only
+curl -fsSL https://raw.githubusercontent.com/nebrass/hve-spielberg/main/scripts/check_requirements.sh | bash
+
+# auto-install the user-scoped deps (--fix is forwarded via `bash -s --`)
+curl -fsSL https://raw.githubusercontent.com/nebrass/hve-spielberg/main/scripts/check_requirements.sh | bash -s -- --fix
+```
+
+Prefer to read the script before running it (recommended for any `curl … | bash`)? Download, inspect, then execute:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nebrass/hve-spielberg/main/scripts/check_requirements.sh -o check_requirements.sh
+less check_requirements.sh && bash check_requirements.sh        # add --fix to auto-install
+```
+
 | Tool | Required | Installation |
 |------|----------|-------------|
 | Node.js 18+ | Yes | [nodejs.org](https://nodejs.org) |

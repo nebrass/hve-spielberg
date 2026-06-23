@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.4] - 2026-06-23
+
 ### Added
 
 - **`scripts/check_requirements.sh` — toolchain doctor.** Verifies every prerequisite
@@ -16,7 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (macOS/Linux/WSL2 detected). `--fix` auto-installs the user-scoped pieces (companion skills via
   `npx skills add`, `chrome-headless-shell`, `pip --user openai-whisper`) and **prints — never
   runs — sudo/system commands**. Exit 1 if any required item is missing. On WSL it flags the
-  `--docker` render path.
+  `--docker` render path. Runs from a local checkout **or directly from GitHub** with no clone —
+  `curl -fsSL …/scripts/check_requirements.sh | bash` (append `bash -s -- --fix` to auto-install).
 - **GitHub Copilot CLI support — the skill is now agent-agnostic.** `hve-spielberg`
   runs on both **Claude Code** (`~/.claude/skills/`) and **GitHub Copilot CLI**
   (`~/.copilot/skills/`). A new **Runtime Compatibility** section in `SKILL.md`
@@ -296,7 +299,8 @@ Initial release of the hve-spielberg skill.
   earlier Pixabay integration.
 - README with install instructions and an MIT license.
 
-[Unreleased]: https://github.com/nebrass/hve-spielberg/compare/v0.0.3...HEAD
+[Unreleased]: https://github.com/nebrass/hve-spielberg/compare/v0.0.4...HEAD
+[0.0.4]: https://github.com/nebrass/hve-spielberg/compare/v0.0.3...v0.0.4
 [0.0.3]: https://github.com/nebrass/hve-spielberg/compare/v0.0.2...v0.0.3
 [0.0.2]: https://github.com/nebrass/hve-spielberg/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/nebrass/hve-spielberg/releases/tag/v0.0.1
