@@ -19,15 +19,15 @@ set -u
 # ---------------------------------------------------------------------------
 if [ -t 1 ]; then
   BOLD=$'\033[1m'; DIM=$'\033[2m'; RED=$'\033[31m'; GRN=$'\033[32m'
-  YEL=$'\033[33m'; BLU=$'\033[34m'; RST=$'\033[0m'
+  YEL=$'\033[33m'; RST=$'\033[0m'
 else
-  BOLD=''; DIM=''; RED=''; GRN=''; YEL=''; BLU=''; RST=''
+  BOLD=''; DIM=''; RED=''; GRN=''; YEL=''; RST=''
 fi
 ok()   { printf '  %s✓%s %s\n' "$GRN" "$RST" "$1"; }
 warn() { printf '  %s○%s %s\n' "$YEL" "$RST" "$1"; }
 bad()  { printf '  %s✗%s %s\n' "$RED" "$RST" "$1"; }
 hint() { printf '      %s↳ %s%s\n' "$DIM" "$1" "$RST"; }
-head() { printf '\n%s%s%s\n' "$BOLD" "$1" "$RST"; }
+section() { printf '\n%s%s%s\n' "$BOLD" "$1" "$RST"; }
 
 FIX=0
 for a in "$@"; do
@@ -77,7 +77,7 @@ printf '%shve-spielberg requirements check%s  (%s%s%s)\n' \
 [ "$FIX" -eq 1 ] && printf '%s--fix: will auto-install user-scoped deps; sudo/system commands are printed, not run%s\n' "$DIM" "$RST"
 
 # ===========================================================================
-head "Required"
+section "Required"
 # ===========================================================================
 
 # --- Node.js >= 18 ---------------------------------------------------------
@@ -135,7 +135,7 @@ else
 fi
 
 # ===========================================================================
-head "Companion skills (required for Phases 3–4)"
+section "Companion skills (required for Phases 3–4)"
 # ===========================================================================
 # Canonical home list — keep in lock-step with SKILL.md § Runtime Compatibility.
 SKILL_HOMES="$HOME/.claude/skills $HOME/.copilot/skills $HOME/.agents/skills .claude/skills .github/skills .agents/skills"
@@ -161,7 +161,7 @@ check_skill hyperframes 1 heygen-com/hyperframes
 check_skill gsap        0 heygen-com/hyperframes   # gsap ships alongside hyperframes
 
 # ===========================================================================
-head "Recommended"
+section "Recommended"
 # ===========================================================================
 
 # --- ELEVENLABS_API_KEY (env — cannot be installed, only guided) -----------
@@ -189,7 +189,7 @@ else
 fi
 
 # ===========================================================================
-head "Optional"
+section "Optional"
 # ===========================================================================
 
 # --- FREESOUND_API_KEY -----------------------------------------------------
