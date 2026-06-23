@@ -27,6 +27,8 @@ For agents that load native plugins, per-agent manifests are provided at the rep
 
 All manifests are MIT-licensed, matching this repository. End-to-end loading + render is currently proven on **Claude Code** and **GitHub Copilot CLI** only.
 
+**OpenCode** and **Pi** need no manifest — both discover skills by directory convention and read the same Agent Skills `SKILL.md` format. OpenCode scans `.claude/skills/`, `~/.claude/skills/`, `.agents/skills/`, `~/.agents/skills/`, `.opencode/skills/`, `~/.config/opencode/skills/`; Pi scans `~/.pi/agent/skills/`, `~/.agents/skills/`, `.pi/skills/`, and project `.agents/skills/` (once trusted). `npx skills add nebrass/hve-spielberg` installs a `<name>/SKILL.md` subdir into a scanned home, so both pick it up natively (see the OpenCode & Pi section in [`README.md`](README.md)). Skill loading follows each agent's documented convention; a full Phase 0→5 run on OpenCode/Pi is not yet verified.
+
 ## Using the skill
 
 Once installed, start it with `/hve-spielberg` (a slash command on Claude Code; invoke by name or intent on GitHub Copilot CLI — run `/skills` there to confirm it loaded). It runs a 6-phase video production pipeline — see [`SKILL.md`](SKILL.md) and [`README.md`](README.md).

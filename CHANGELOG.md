@@ -35,6 +35,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the hand-paired `~/.claude` / `~/.copilot` git-clone and `cp -r` install blocks into a
   single CLI path with one manual git-clone fallback — the CLI auto-detects the agent and
   resolves its scanned skills home.
+- **OpenCode & Pi support (documented).** Both agents discover skills by directory
+  convention and read the same Agent Skills `SKILL.md` format. OpenCode scans
+  `.claude/skills/`, `~/.claude/skills/`, `.agents/skills/`, `~/.agents/skills/`,
+  `.opencode/skills/`, `~/.config/opencode/skills/`; Pi scans `~/.pi/agent/skills/`,
+  `~/.agents/skills/`, `.pi/skills/`, and project `.agents/skills/` (once trusted).
+  Since `npx skills add nebrass/hve-spielberg` already installs a `<name>/SKILL.md`
+  subdir into a scanned home, no plugin or `package.json` is needed — both pick the
+  skill up natively and load it on demand. Documented in `README.md` and `AGENTS.md`.
+  Skill *loading* follows each agent's documented convention; a full Phase 0→5 run on
+  OpenCode/Pi is not yet verified (proven on Claude Code and GitHub Copilot CLI).
 
 ### Documentation
 

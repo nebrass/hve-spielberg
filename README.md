@@ -117,6 +117,20 @@ git clone https://github.com/nebrass/hve-spielberg.git ~/.claude/skills/hve-spie
 
 This repo also ships `.codex-plugin/` and `.cursor-plugin/` manifests, and `npx skills add` can install into those agents. **These integrations are provided but not yet verified end-to-end** — the skill loads and renders are proven on **Claude Code** and **GitHub Copilot CLI** only. Codex/Cursor should work (the skill body is agent-neutral and the manifests point at the root `SKILL.md`), but treat them as untested until a full Phase 0→5 run is confirmed on each. Reports welcome.
 
+### OpenCode & Pi (native discovery)
+
+No plugin needed — both **OpenCode** and **Pi** discover skills by directory convention and read the same Agent Skills `SKILL.md` format. The skills-CLI install above writes to a home each one scans, so they pick up hve-spielberg natively:
+
+```bash
+npx skills add nebrass/hve-spielberg            # project (.agents/skills/)
+npx skills add nebrass/hve-spielberg --global   # global
+```
+
+- **OpenCode** scans `.claude/skills/`, `~/.claude/skills/`, `.agents/skills/`, `~/.agents/skills/`, `.opencode/skills/`, `~/.config/opencode/skills/`. Troubleshooting: <https://opencode.ai/docs/skills/>.
+- **Pi** scans `~/.pi/agent/skills/`, `~/.agents/skills/` (global) and `.pi/skills/`, `.agents/skills/` (project, after the project is *trusted*). Pi discovers `<name>/SKILL.md` subdirectories — which is exactly what `npx skills add` creates. Troubleshooting: <https://pi.dev/docs/latest/skills>.
+
+Then ask for a video (e.g. "make a showcase video of this app") — the agent loads the skill on demand. Skill *loading* follows each agent's documented convention; a full Phase 0→5 run on OpenCode/Pi is **not yet verified** (end-to-end render is proven on Claude Code and GitHub Copilot CLI).
+
 ## Updating
 
 Already installed an older version? Update to the latest `main`:
