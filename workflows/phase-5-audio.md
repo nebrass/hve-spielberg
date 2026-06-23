@@ -75,10 +75,11 @@ would bake this project's config into every future project, and two projects
 could not run concurrently.
 
 ```bash
-# Resolve the skill install dir across runtimes (Claude Code / GitHub Copilot CLI),
-# global or per-project:
-SKILL_DIR=$(for d in ~/.claude/skills/hve-spielberg ~/.copilot/skills/hve-spielberg \
-  .claude/skills/hve-spielberg .copilot/skills/hve-spielberg; do [ -d "$d" ] && echo "$d" && break; done)
+# $SKILL_HOMES is the canonical home list defined in SKILL.md § Runtime Compatibility.
+# Keep this line identical to that definition; edit it there, not here.
+SKILL_HOMES="$HOME/.claude/skills $HOME/.copilot/skills $HOME/.agents/skills .claude/skills .github/skills .agents/skills"
+SKILL_DIR=$(for h in $SKILL_HOMES; do [ -d "$h/hve-spielberg" ] && echo "$h/hve-spielberg" && break; done)
+[ -n "$SKILL_DIR" ] || { echo "ERROR: hve-spielberg install dir not found — set SKILL_DIR to the skill's path manually" >&2; }
 cp "$SKILL_DIR/scripts/generate_voiceover.py" ./voiceover.py
 ```
 

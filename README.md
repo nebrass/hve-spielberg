@@ -109,14 +109,14 @@ In Copilot CLI, run `/skills` to confirm the skill is loaded.
 
 ### Option 3: Git Submodule / Direct Copy
 
-Copy the skill files directly into any project's skills directory (`.claude/skills/` for Claude Code, `.copilot/skills/` for Copilot CLI):
+Copy the skill files directly into any project's skills directory (`.claude/skills/` for Claude Code; `.github/skills/` for Copilot CLI — its project-level `.copilot/skills/` is **not** scanned):
 
 ```bash
 # Claude Code
 cp -r ~/.claude/skills/hve-spielberg my-project/.claude/skills/hve-spielberg
 
 # GitHub Copilot CLI
-cp -r ~/.copilot/skills/hve-spielberg my-project/.copilot/skills/hve-spielberg
+cp -r ~/.copilot/skills/hve-spielberg my-project/.github/skills/hve-spielberg
 ```
 
 ## Updating

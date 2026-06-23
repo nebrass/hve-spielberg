@@ -103,7 +103,7 @@ cp -r ~/.claude/skills/hve-spielberg \
 git clone https://github.com/nebrass/hve-spielberg.git \
   ~/.copilot/skills/hve-spielberg                         # manual
 cp -r ~/.copilot/skills/hve-spielberg \
-  my-project/.copilot/skills/hve-spielberg                # per-project copy
+  my-project/.github/skills/hve-spielberg                 # per-project copy (project .copilot/skills is not scanned)
 ```
 
 When testing skill changes locally, the global install path is `~/.claude/skills/hve-spielberg/` (Claude Code) or `~/.copilot/skills/hve-spielberg/` (GitHub Copilot CLI).

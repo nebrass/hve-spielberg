@@ -13,10 +13,11 @@ Pick the most specific path that Phase 1 Step 1.2 set up.
 **If Phase 1 recorded `design_system: <slug>`** in `project-plan.md` (one of `stripe`, `linear-app`, `apple`, `notion`, `vercel`, `airbnb`, `github`, `cal`, `arc`, `bento`), the brand specification ships with the skill. Copy it straight into the project root:
 
 ```bash
-# Resolve the skill install dir across runtimes (Claude Code / GitHub Copilot CLI),
-# global or per-project:
-SKILL_DIR=$(for d in ~/.claude/skills/hve-spielberg ~/.copilot/skills/hve-spielberg \
-  .claude/skills/hve-spielberg .copilot/skills/hve-spielberg; do [ -d "$d" ] && echo "$d" && break; done)
+# $SKILL_HOMES is the canonical home list defined in SKILL.md § Runtime Compatibility.
+# Keep this line identical to that definition; edit it there, not here.
+SKILL_HOMES="$HOME/.claude/skills $HOME/.copilot/skills $HOME/.agents/skills .claude/skills .github/skills .agents/skills"
+SKILL_DIR=$(for h in $SKILL_HOMES; do [ -d "$h/hve-spielberg" ] && echo "$h/hve-spielberg" && break; done)
+[ -n "$SKILL_DIR" ] || { echo "ERROR: hve-spielberg install dir not found — set SKILL_DIR to the skill's path manually" >&2; }
 cp "$SKILL_DIR/design-systems/<slug>/DESIGN.md" ./DESIGN.md
 ```
 

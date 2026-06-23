@@ -34,14 +34,28 @@ runtime you are on:
 - **Asking the user a question.** Wherever a `{"questions": [...]}` JSON block appears, treat it
   as a runtime-neutral schema: render each question as a **native multiple-choice prompt** using
   whatever selection tool your runtime provides — `AskUserQuestion` on Claude Code, `ask_user` on
-  GitHub Copilot CLI. `multiSelect: true` means allow multiple selections. Never print the raw
-  JSON to the user.
+  GitHub Copilot CLI. Never print the raw JSON to the user. `multiSelect: true` means the user may
+  pick several options — on a runtime whose picker is single-select only (Copilot CLI's `ask_user`),
+  do **not** silently keep one answer: ask the question as a free-text prompt that invites a
+  comma-separated list, or repeat the single-select until the user signals "done," so every chosen
+  option survives into `context.md`.
 - **Loading a companion skill.** Wherever you see `Skill(<name>)` (e.g. `Skill(hyperframes)`),
   load that skill the way your runtime does it — the `Skill` tool on Claude Code, or read the
   companion skill's `SKILL.md` (auto-discovered alongside this one) on GitHub Copilot CLI.
-- **Skill install home.** Companion skills (`hyperframes`, `gsap`) live next to this skill:
-  `~/.claude/skills/<name>/` on Claude Code, `~/.copilot/skills/<name>/` on GitHub Copilot CLI.
-  Prereq checks below probe **both** locations.
+- **Skill install home.** Companion skills (`hyperframes`, `gsap`) live next to this skill in
+  whichever home your runtime scans — `~/.claude/skills/<name>/` (Claude Code) or
+  `~/.copilot/skills/<name>/` (Copilot CLI) for a global install, or the project-level home
+  (`.claude/skills/` on Claude Code; `.github/skills/` or `.agents/skills/` on Copilot CLI — note
+  project-level `.copilot/skills/` is **not** scanned).
+
+  These homes, in this order, are the **single canonical list** — the prereq probe below and every
+  workflow's `SKILL_DIR` resolver derive from exactly this `$SKILL_HOMES` definition. Change it here
+  and nowhere else:
+
+  ```bash
+  # CANONICAL skill-home search list (global first, then project; Claude Code + Copilot CLI).
+  SKILL_HOMES="$HOME/.claude/skills $HOME/.copilot/skills $HOME/.agents/skills .claude/skills .github/skills .agents/skills"
+  ```
 
 ## Prerequisites
 
@@ -58,12 +72,18 @@ echo "asciinema+agg+timeout (CLI clip recording): optional — $(command -v asci
 ```
 
 ```bash
-for home in ~/.claude/skills ~/.copilot/skills; do
-  [ -f "$home/hyperframes/SKILL.md" ] && { echo "hyperframes skill: ✓ ($home)"; hf=1; break; }
-done; [ -n "$hf" ] || echo "hyperframes skill: ✗ — install the hyperframes skill into ~/.claude/skills/ (Claude Code) or ~/.copilot/skills/ (GitHub Copilot CLI)"
-for home in ~/.claude/skills ~/.copilot/skills; do
-  [ -f "$home/gsap/SKILL.md" ] && { echo "gsap skill: ✓ ($home)"; gs=1; break; }
-done; [ -n "$gs" ] || echo "gsap skill: ○ — recommended companion to hyperframes for animation choreography"
+# Probe the canonical skill homes ($SKILL_HOMES, defined in § Runtime Compatibility above).
+SKILL_HOMES="$HOME/.claude/skills $HOME/.copilot/skills $HOME/.agents/skills .claude/skills .github/skills .agents/skills"
+for s in hyperframes gsap; do
+  found=
+  for home in $SKILL_HOMES; do
+    [ -f "$home/$s/SKILL.md" ] && { echo "$s skill: ✓ ($home)"; found=1; break; }
+  done
+  [ -n "$found" ] && continue
+  [ "$s" = hyperframes ] \
+    && echo "hyperframes skill: ✗ — install it into ~/.claude/skills/ (Claude Code) or ~/.copilot/skills/ (GitHub Copilot CLI)" \
+    || echo "gsap skill: ○ — recommended companion to hyperframes for animation choreography"
+done
 npx --yes hyperframes --version 2>/dev/null && echo "hyperframes CLI: ✓" || echo "hyperframes CLI: ✗ — npm i -g hyperframes  (or rely on npx; package: hyperframes on npm, repo github.com/heygen-com/hyperframes)"
 ```
 
