@@ -1,10 +1,10 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) — and GitHub Copilot CLI, which also reads `CLAUDE.md` — when working with code in this repository.
 
 ## What this repo is
 
-This repo **is a Claude Code skill** (`hve-spielberg`), not a typical application. The "source" is prompt content (markdown) plus two Python helper scripts. There is no build system, no test suite, no lint config — the skill is consumed by future Claude Code sessions that invoke `/hve-spielberg <project-dir>`.
+This repo **is an agent skill** (`hve-spielberg`) that runs on both **Claude Code** and **GitHub Copilot CLI**, not a typical application. The "source" is prompt content (markdown) plus two Python helper scripts. There is no build system, no test suite, no lint config — the skill is consumed by future agent sessions that invoke `/hve-spielberg <project-dir>` (a slash command on Claude Code; invoked by name/intent on Copilot CLI). The `SKILL.md` frontmatter uses the Claude Code skill schema; Copilot CLI loads the skill from `name`/`description` and harmlessly ignores the Claude-only fields.
 
 The renderer is **HyperFrames** (HTML + GSAP, rendered via headless Chromium). React/Remotion are no longer used.
 
@@ -79,6 +79,11 @@ These are enforced verbally in the `## DON'Ts` section of `SKILL.md`. If you mod
 - **Add a voice** → update both the `## ElevenLabs Voice IDs` table in `SKILL.md` and the `## Voices` table in `README.md` (the two tables must stay in sync).
 - **Change phase logic** → edit the relevant `workflows/phase-N-*.md`; update the prerequisite list in `SKILL.md` if a new required file is introduced.
 - **Adjust prerequisite checks** → the `## Prerequisites` block in `SKILL.md` (runs at skill entry).
+- **Add a user-interaction prompt in a workflow** → write it as a neutral `{"questions":[...]}` block (the runtime-agnostic schema), introduced by plain prose ("ask the user…", "present selectable options…"). **Never name a picker tool** (`AskUserQuestion`, `ask_user`) or write a literal tool call inside a workflow — the per-runtime binding for the question schema, `Skill(<name>)`, and `multiSelect` lives in **one place**: `SKILL.md` § Runtime Compatibility. This is the "name actions, not tools" rule that keeps the phase content portable; a tool name hard-coded in a phase body is a portability regression. (Qualified MCP names like `mcp__chrome-devtools__*` are *not* a violation — they're identical across runtimes; the rule targets names that *differ* per runtime.)
+- **Change where the skill can be installed** (`$SKILL_HOMES`) → `SKILL.md` § Runtime Compatibility holds the canonical search list. The same `SKILL_HOMES="…"` line is repeated in the `SKILL.md` prereq probe and in the `SKILL_DIR` resolver of `workflows/phase-3-design.md` + `workflows/phase-5-audio.md` (shell state can't cross the agent's separate bash calls, so the list is re-stated at each bootstrap point rather than sourced). Keep all four byte-identical; verify with:
+  ```bash
+  grep -rho 'SKILL_HOMES="[^"]*"' SKILL.md workflows/phase-3-design.md workflows/phase-5-audio.md | sort -u | wc -l   # must print 1
+  ```
 - **Bump skill metadata** → frontmatter at top of `SKILL.md` (especially `allowed-tools` if a new MCP tool is needed).
 - **Bump the GSAP version** → the CDN `<script>` tags carry a Subresource Integrity hash (`integrity="sha384-…" crossorigin="anonymous"`), pinned to `gsap@3.14.2`. Changing the version *requires* recomputing the hash, or the script is blocked and every scene renders without animation (caught by `npx hyperframes validate` in Phase 4/5). Update **all** occurrences together — `templates/scene-*.html`, the skeletons in `workflows/phase-3-design.md` + `workflows/phase-4-production.md`, and every `example/**/*.html`:
   ```bash
@@ -90,14 +95,18 @@ These are enforced verbally in the `## DON'Ts` section of `SKILL.md`. If you mod
 ## Installation paths users invoke
 
 ```bash
-npx skills add nebrass/hve-spielberg                      # via Skills CLI
-git clone https://github.com/nebrass/hve-spielberg.git \
-  ~/.claude/skills/hve-spielberg                          # manual
-cp -r ~/.claude/skills/hve-spielberg \
-  my-project/.claude/skills/hve-spielberg                 # per-project copy
+# Recommended — the skills CLI auto-detects the agent and resolves its skills home:
+npx skills add nebrass/hve-spielberg                                   # project install
+npx skills add nebrass/hve-spielberg --global                         # global (Claude Code default)
+npx skills add nebrass/hve-spielberg --agent github-copilot --global  # global for Copilot CLI
+
+# Fallback — manual git clone into the agent's skills home:
+git clone https://github.com/nebrass/hve-spielberg.git ~/.claude/skills/hve-spielberg
 ```
 
-When testing skill changes locally, the global install path is `~/.claude/skills/hve-spielberg/`.
+The repo also ships per-agent plugin manifests at root (`.claude-plugin/`, `.codex-plugin/`, `.cursor-plugin/`) plus a root `AGENTS.md`; each points its skills source at the repo root (`./`) because `SKILL.md` lives at the root, not under `skills/`.
+
+When testing skill changes locally, the global install path is `~/.claude/skills/hve-spielberg/` (Claude Code) or `~/.copilot/skills/hve-spielberg/` (GitHub Copilot CLI).
 
 ## Git / release conventions
 

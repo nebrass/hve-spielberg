@@ -258,4 +258,4 @@ tl.to("#sketchout-1 .mh-sketchout-bwd",
 
 ## Source
 
-Full versions of these patterns (including multi-line variants, mode-cycling for captions, and the path-length math) live in the HyperFrames skill at `~/.claude/skills/hyperframes/references/css-patterns.md`. This file is a product-video focused subset.
+Full versions of these patterns (including multi-line variants, mode-cycling for captions, and the path-length math) live in the HyperFrames skill at `<skills-home>/hyperframes/references/css-patterns.md` (`<skills-home>` is `~/.claude/skills` on Claude Code or `~/.copilot/skills` on GitHub Copilot CLI). This file is a product-video focused subset.
