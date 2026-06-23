@@ -25,11 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     references now detect either skills home.
   - `README.md`, `CLAUDE.md`, and `.github/copilot-instructions.md` document
     installation and usage for both agents.
-- **Per-agent plugin manifests + skills-CLI-first install docs.** Added root-level
-  `.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json`,
-  `.codex-plugin/plugin.json`, and `.cursor-plugin/plugin.json` (all MIT; each manifest's
-  skills source points at the repo root `./` because `SKILL.md` lives at the root, not
-  under `skills/`), plus a root `AGENTS.md` pointer. `README.md`, `CLAUDE.md`, and
+- **Claude Code plugin manifest + skills-CLI-first install docs.** Added root-level
+  `.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` (MIT; skills source points at
+  the repo root `./` because `SKILL.md` lives at the root, not under `skills/`), plus a root
+  `AGENTS.md` pointer. `README.md`, `CLAUDE.md`, and
   `.github/copilot-instructions.md` now lead with
   `npx skills add nebrass/hve-spielberg [--agent github-copilot] [--global]` and collapse
   the hand-paired `~/.claude` / `~/.copilot` git-clone and `cp -r` install blocks into a
@@ -48,10 +47,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 
-- **Codex & Cursor marked experimental.** The repo ships `.codex-plugin/` and
-  `.cursor-plugin/` manifests, but end-to-end loading + render is verified only on Claude Code
-  and GitHub Copilot CLI. `README.md` and `AGENTS.md` now label Codex/Cursor as
-  manifest-provided-but-unverified, instead of implying first-class support.
+- **Codex & Cursor are natively discovered — dead manifests removed.** Per the official
+  [Codex](https://developers.openai.com/codex/skills) and [Cursor](https://cursor.com/docs/skills)
+  skills docs, both agents discover skills by directory convention (scanning `.agents/skills/`,
+  `.claude/skills/`, etc.) and read **no** `plugin.json` manifest. The `.codex-plugin/` and
+  `.cursor-plugin/` manifests shipped earlier were no-ops, so they are removed; only Claude Code
+  uses a manifest (`.claude-plugin/`). `README.md` and `AGENTS.md` now group Codex and Cursor with
+  OpenCode and Pi under native discovery — `npx skills add` installs into a scanned home and all
+  are picked up natively. Skill *loading* follows each agent's documented convention; a full Phase
+  0→5 run on these agents is not yet verified (proven on Claude Code and GitHub Copilot CLI).
 
 ### Changed
 

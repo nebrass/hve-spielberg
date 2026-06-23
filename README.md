@@ -87,7 +87,7 @@ hve-spielberg depends on two **companion agent skills** plus the **`hyperframes`
 
 ## Installation
 
-The recommended install is the **[skills CLI](https://github.com/vercel-labs/skills)** — it auto-detects your agent (Claude Code, GitHub Copilot CLI) and installs into the skills home that agent actually scans, so you never hand-pick a path. It also installs the per-agent plugin manifests this repo ships (`.claude-plugin/`, `.codex-plugin/`, `.cursor-plugin/`).
+The recommended install is the **[skills CLI](https://github.com/vercel-labs/skills)** — it auto-detects your agent (Claude Code, GitHub Copilot CLI) and installs into the skills home that agent actually scans, so you never hand-pick a path. The same install is discovered natively by OpenCode, Pi, Codex, and Cursor (see [below](#opencode-pi-codex--cursor-native-discovery)).
 
 ### Recommended: Skills CLI
 
@@ -113,23 +113,21 @@ git clone https://github.com/nebrass/hve-spielberg.git ~/.claude/skills/hve-spie
 # GitHub Copilot CLI: clone into ~/.copilot/skills/hve-spielberg instead
 ```
 
-### Codex & Cursor (experimental)
+### OpenCode, Pi, Codex & Cursor (native discovery)
 
-This repo also ships `.codex-plugin/` and `.cursor-plugin/` manifests, and `npx skills add` can install into those agents. **These integrations are provided but not yet verified end-to-end** — the skill loads and renders are proven on **Claude Code** and **GitHub Copilot CLI** only. Codex/Cursor should work (the skill body is agent-neutral and the manifests point at the root `SKILL.md`), but treat them as untested until a full Phase 0→5 run is confirmed on each. Reports welcome.
-
-### OpenCode & Pi (native discovery)
-
-No plugin needed — both **OpenCode** and **Pi** discover skills by directory convention and read the same Agent Skills `SKILL.md` format. The skills-CLI install above writes to a home each one scans, so they pick up hve-spielberg natively:
+No plugin or manifest needed — these agents discover skills by directory convention and read the same Agent Skills `SKILL.md` format. The skills-CLI install above writes a `<name>/SKILL.md` subdir into a home each one scans, so they pick up hve-spielberg natively:
 
 ```bash
 npx skills add nebrass/hve-spielberg            # project (.agents/skills/)
 npx skills add nebrass/hve-spielberg --global   # global
 ```
 
-- **OpenCode** scans `.claude/skills/`, `~/.claude/skills/`, `.agents/skills/`, `~/.agents/skills/`, `.opencode/skills/`, `~/.config/opencode/skills/`. Troubleshooting: <https://opencode.ai/docs/skills/>.
-- **Pi** scans `~/.pi/agent/skills/`, `~/.agents/skills/` (global) and `.pi/skills/`, `.agents/skills/` (project, after the project is *trusted*). Pi discovers `<name>/SKILL.md` subdirectories — which is exactly what `npx skills add` creates. Troubleshooting: <https://pi.dev/docs/latest/skills>.
+- **OpenCode** — `.claude/skills/`, `~/.claude/skills/`, `.agents/skills/`, `~/.agents/skills/`, `.opencode/skills/`, `~/.config/opencode/skills/`. Docs: <https://opencode.ai/docs/skills/>.
+- **Pi** — `~/.pi/agent/skills/`, `~/.agents/skills/` (global), `.pi/skills/`, `.agents/skills/` (project, after the project is *trusted*). Docs: <https://pi.dev/docs/latest/skills>.
+- **Codex** — `$CWD/.agents/skills/`, `$REPO_ROOT/.agents/skills/`, `$HOME/.agents/skills/`, `/etc/codex/skills/`. Docs: <https://developers.openai.com/codex/skills>.
+- **Cursor** — `.agents/skills/`, `.cursor/skills/`, `~/.agents/skills/`, `~/.cursor/skills/`, plus `.claude/skills/` and `.codex/skills/`. Docs: <https://cursor.com/docs/skills>.
 
-Then ask for a video (e.g. "make a showcase video of this app") — the agent loads the skill on demand. Skill *loading* follows each agent's documented convention; a full Phase 0→5 run on OpenCode/Pi is **not yet verified** (end-to-end render is proven on Claude Code and GitHub Copilot CLI).
+Then ask for a video (e.g. "make a showcase video of this app") — the agent loads the skill on demand. Skill *loading* follows each agent's documented convention; a full Phase 0→5 run on these agents is **not yet verified** (end-to-end render is proven on Claude Code and GitHub Copilot CLI).
 
 ## Updating
 

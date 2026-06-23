@@ -100,7 +100,7 @@ npx skills add nebrass/hve-spielberg --global                         # global f
 git clone https://github.com/nebrass/hve-spielberg.git ~/.copilot/skills/hve-spielberg
 ```
 
-The repo also ships per-agent plugin manifests at root (`.claude-plugin/`, `.codex-plugin/`, `.cursor-plugin/`) plus a root `AGENTS.md`; each points its skills source at the repo root (`./`) because `SKILL.md` lives at the root, not under `skills/`.
+The repo ships a Claude Code plugin manifest at root (`.claude-plugin/plugin.json` + `marketplace.json`, source `./`) plus a root `AGENTS.md`. Other agents (GitHub Copilot CLI, OpenCode, Pi, Codex, Cursor) need no manifest — they discover the skill by directory convention from the homes `npx skills add` writes into (`.agents/skills/`, `.claude/skills/`, etc.). See `AGENTS.md` for the per-agent scan paths.
 
 When testing skill changes locally, the global install path is `~/.claude/skills/hve-spielberg/` (Claude Code) or `~/.copilot/skills/hve-spielberg/` (GitHub Copilot CLI).
 
