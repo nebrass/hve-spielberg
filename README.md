@@ -113,6 +113,10 @@ git clone https://github.com/nebrass/hve-spielberg.git ~/.claude/skills/hve-spie
 # GitHub Copilot CLI: clone into ~/.copilot/skills/hve-spielberg instead
 ```
 
+### Codex & Cursor (experimental)
+
+This repo also ships `.codex-plugin/` and `.cursor-plugin/` manifests, and `npx skills add` can install into those agents. **These integrations are provided but not yet verified end-to-end** — the skill loads and renders are proven on **Claude Code** and **GitHub Copilot CLI** only. Codex/Cursor should work (the skill body is agent-neutral and the manifests point at the root `SKILL.md`), but treat them as untested until a full Phase 0→5 run is confirmed on each. Reports welcome.
+
 ## Updating
 
 Already installed an older version? Update to the latest `main`:
