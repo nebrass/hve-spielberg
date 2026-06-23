@@ -1,0 +1,26 @@
+{
+  "name": "hve-spielberg",
+  "description": "End-to-end video production pipeline with design thinking. A 6-phase orchestrator (Discovery → Storytelling → Capture → Design → Production → Audio & Render) that turns your app into a polished promo, showcase, or tutorial video, rendered with HyperFrames (HTML + GSAP). Runs on Claude Code and GitHub Copilot CLI.",
+  "version": "0.0.3",
+  "author": {
+    "name": "Nebrass Lamouchi",
+    "email": "lnibrass@gmail.com"
+  },
+  "homepage": "https://github.com/nebrass/hve-spielberg",
+  "repository": "https://github.com/nebrass/hve-spielberg",
+  "license": "MIT",
+  "keywords": [
+    "video",
+    "promo",
+    "showcase",
+    "tutorial",
+    "hyperframes",
+    "gsap",
+    "elevenlabs",
+    "tts",
+    "storyboard",
+    "design-thinking",
+    "claude-code",
+    "github-copilot"
+  ]
+}

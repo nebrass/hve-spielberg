@@ -95,20 +95,16 @@ These are enforced verbally in the `## DON'Ts` section of `SKILL.md`. If you mod
 ## Installation paths users invoke
 
 ```bash
-npx skills add nebrass/hve-spielberg                      # via Skills CLI
+# Recommended — the skills CLI auto-detects the agent and resolves its skills home:
+npx skills add nebrass/hve-spielberg                                   # project install
+npx skills add nebrass/hve-spielberg --global                         # global (Claude Code default)
+npx skills add nebrass/hve-spielberg --agent github-copilot --global  # global for Copilot CLI
 
-# Claude Code
-git clone https://github.com/nebrass/hve-spielberg.git \
-  ~/.claude/skills/hve-spielberg                          # manual
-cp -r ~/.claude/skills/hve-spielberg \
-  my-project/.claude/skills/hve-spielberg                 # per-project copy
-
-# GitHub Copilot CLI
-git clone https://github.com/nebrass/hve-spielberg.git \
-  ~/.copilot/skills/hve-spielberg                         # manual
-cp -r ~/.copilot/skills/hve-spielberg \
-  my-project/.github/skills/hve-spielberg                 # per-project copy (project .copilot/skills is not scanned)
+# Fallback — manual git clone into the agent's skills home:
+git clone https://github.com/nebrass/hve-spielberg.git ~/.claude/skills/hve-spielberg
 ```
+
+The repo also ships per-agent plugin manifests at root (`.claude-plugin/`, `.codex-plugin/`, `.cursor-plugin/`) plus a root `AGENTS.md`; each points its skills source at the repo root (`./`) because `SKILL.md` lives at the root, not under `skills/`.
 
 When testing skill changes locally, the global install path is `~/.claude/skills/hve-spielberg/` (Claude Code) or `~/.copilot/skills/hve-spielberg/` (GitHub Copilot CLI).
 

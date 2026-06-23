@@ -77,46 +77,40 @@ Each phase has a user-approval checkpoint before proceeding to the next.
 
 ### Required Skills
 
-hve-spielberg depends on two **companion agent skills** plus the **`hyperframes` npm package** (these are separate — the skills provide authoring prompts; the npm package provides the `hyperframes` CLI). Install the companion skills into the same skills home as this skill — `~/.claude/skills/` for Claude Code or `~/.copilot/skills/` for GitHub Copilot CLI:
+hve-spielberg depends on two **companion agent skills** plus the **`hyperframes` npm package** (these are separate — the skills provide authoring prompts; the npm package provides the `hyperframes` CLI). Install the companion skills the same way as this skill — with `npx skills add` (see [Installation](#installation)), which auto-detects your agent and resolves the correct skills home for you:
 
 | Dependency | Type | Purpose | Install |
 |-----------|------|---------|---------|
-| `hyperframes` skill | Agent skill | Authoring rules for HTML/GSAP compositions, sub-comps, transitions, captions | Install the HyperFrames skill into `~/.claude/skills/hyperframes/` (Claude Code) or `~/.copilot/skills/hyperframes/` (Copilot CLI) |
+| `hyperframes` skill | Agent skill | Authoring rules for HTML/GSAP compositions, sub-comps, transitions, captions | `npx skills add heygen-com/hyperframes` |
 | `gsap` skill | Agent skill | Animation choreography reference (eases, timelines, stagger) | Recommended companion to the hyperframes skill |
 | `hyperframes` npm package | CLI | `init`, `add` (pull catalog blocks, Phase 4), `lint`, `preview`, `inspect`, `validate`, `render`, `doctor` (render diagnostics), `transcribe` (Phase 5's preferred timing verifier, with standalone Whisper as fallback), `tts` (no-key fallback when `ELEVENLABS_API_KEY` is unset) | `npx hyperframes <command>` (auto-fetches; package: [`hyperframes`](https://www.npmjs.com/package/hyperframes), repo: [github.com/heygen-com/hyperframes](https://github.com/heygen-com/hyperframes)) |
 
 ## Installation
 
-The skill works with both **Claude Code** (`~/.claude/skills/`) and **GitHub Copilot CLI** (`~/.copilot/skills/`). Pick the skills home for your agent.
+The recommended install is the **[skills CLI](https://github.com/vercel-labs/skills)** — it auto-detects your agent (Claude Code, GitHub Copilot CLI) and installs into the skills home that agent actually scans, so you never hand-pick a path. It also installs the per-agent plugin manifests this repo ships (`.claude-plugin/`, `.codex-plugin/`, `.cursor-plugin/`).
 
-### Option 1: Skills CLI (Recommended)
+### Recommended: Skills CLI
 
 ```bash
+# Project install — run from your project; writes to the agent's project skills home
 npx skills add nebrass/hve-spielberg
-```
 
-### Option 2: Manual (git clone)
+# Global install (Claude Code is the default agent)
+npx skills add nebrass/hve-spielberg --global
 
-```bash
-# Claude Code
-git clone https://github.com/nebrass/hve-spielberg.git ~/.claude/skills/hve-spielberg
-
-# GitHub Copilot CLI
-git clone https://github.com/nebrass/hve-spielberg.git ~/.copilot/skills/hve-spielberg
+# Global install for GitHub Copilot CLI (~/.copilot/skills/)
+npx skills add nebrass/hve-spielberg --agent github-copilot --global
 ```
 
 In Copilot CLI, run `/skills` to confirm the skill is loaded.
 
-### Option 3: Git Submodule / Direct Copy
+### Fallback: manual git clone
 
-Copy the skill files directly into any project's skills directory (`.claude/skills/` for Claude Code; `.github/skills/` for Copilot CLI — its project-level `.copilot/skills/` is **not** scanned):
+If you can't run the CLI, clone the repo into your agent's skills home directly:
 
 ```bash
-# Claude Code
-cp -r ~/.claude/skills/hve-spielberg my-project/.claude/skills/hve-spielberg
-
-# GitHub Copilot CLI
-cp -r ~/.copilot/skills/hve-spielberg my-project/.github/skills/hve-spielberg
+git clone https://github.com/nebrass/hve-spielberg.git ~/.claude/skills/hve-spielberg
+# GitHub Copilot CLI: clone into ~/.copilot/skills/hve-spielberg instead
 ```
 
 ## Updating
@@ -124,13 +118,10 @@ cp -r ~/.copilot/skills/hve-spielberg my-project/.github/skills/hve-spielberg
 Already installed an older version? Update to the latest `main`:
 
 ```bash
-# Installed via the Skills CLI (npx skills add …):
 npx skills update hve-spielberg     # alias: upgrade · -g global · -p project · -y skip the scope prompt
-
-# Installed via a manual git clone:
-cd ~/.claude/skills/hve-spielberg && git pull     # Claude Code
-cd ~/.copilot/skills/hve-spielberg && git pull    # GitHub Copilot CLI
 ```
+
+Installed via a manual git clone instead? `cd` into the skills home you cloned to and run `git pull`.
 
 Then **restart your agent** (Claude Code or GitHub Copilot CLI) so the updated `SKILL.md` reloads — skills are read at session start, so file changes don't apply mid-session. Run `npx skills list` to see what's installed and where.
 

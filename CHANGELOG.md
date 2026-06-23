@@ -25,6 +25,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     references now detect either skills home.
   - `README.md`, `CLAUDE.md`, and `.github/copilot-instructions.md` document
     installation and usage for both agents.
+- **Per-agent plugin manifests + skills-CLI-first install docs.** Added root-level
+  `.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json`,
+  `.codex-plugin/plugin.json`, and `.cursor-plugin/plugin.json` (all MIT; each manifest's
+  skills source points at the repo root `./` because `SKILL.md` lives at the root, not
+  under `skills/`), plus a root `AGENTS.md` pointer. `README.md`, `CLAUDE.md`, and
+  `.github/copilot-instructions.md` now lead with
+  `npx skills add nebrass/hve-spielberg [--agent github-copilot] [--global]` and collapse
+  the hand-paired `~/.claude` / `~/.copilot` git-clone and `cp -r` install blocks into a
+  single CLI path with one manual git-clone fallback — the CLI auto-detects the agent and
+  resolves its scanned skills home.
 
 ### Changed
 
