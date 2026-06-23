@@ -21,11 +21,11 @@ The CLI auto-detects which coding agents you have installed and resolves the cor
 
 For agents that load native plugins, per-agent manifests are provided at the repo root. Each points its skills source at `./` (the repo root holds `SKILL.md`), not `./skills/`:
 
-- `.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` — Claude Code
-- `.codex-plugin/plugin.json` — Codex
-- `.cursor-plugin/plugin.json` — Cursor
+- `.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` — Claude Code (verified)
+- `.codex-plugin/plugin.json` — Codex (experimental — manifest provided, not yet verified end-to-end)
+- `.cursor-plugin/plugin.json` — Cursor (experimental — manifest provided, not yet verified end-to-end)
 
-All manifests are MIT-licensed, matching this repository.
+All manifests are MIT-licensed, matching this repository. End-to-end loading + render is currently proven on **Claude Code** and **GitHub Copilot CLI** only.
 
 ## Using the skill
 

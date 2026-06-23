@@ -36,6 +36,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   single CLI path with one manual git-clone fallback — the CLI auto-detects the agent and
   resolves its scanned skills home.
 
+### Documentation
+
+- **Codex & Cursor marked experimental.** The repo ships `.codex-plugin/` and
+  `.cursor-plugin/` manifests, but end-to-end loading + render is verified only on Claude Code
+  and GitHub Copilot CLI. `README.md` and `AGENTS.md` now label Codex/Cursor as
+  manifest-provided-but-unverified, instead of implying first-class support.
+
 ### Changed
 
 - **Phase 5 music mix now sits the soundtrack under the voice as a ducked bed.**
