@@ -9,7 +9,7 @@
 #                                            # print (never run) sudo/system commands
 #   ./scripts/check_requirements.sh --help
 #
-# Exit status: 0 if every REQUIRED item is satisfied, 1 otherwise.
+# Exit status: 0 if every REQUIRED item is satisfied, 1 if any is missing, 2 on an unknown argument.
 # Recommended/optional gaps never fail the run — they only warn.
 
 set -u
@@ -34,8 +34,8 @@ for a in "$@"; do
   case "$a" in
     --fix) FIX=1 ;;
     -h|--help)
-      grep '^#' "$0" | sed 's/^# \{0,1\}//; 1d'; exit 0 ;;
-    *) echo "unknown arg: $a (try --help)"; exit 2 ;;
+      sed -n '2,/^$/p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) echo "unknown arg: $a (try --help)" >&2; exit 2 ;;
   esac
 done
 
@@ -89,6 +89,10 @@ else
   bad "Node.js — not found"; hint "install from https://nodejs.org (>= 18)"; REQUIRED_FAIL=1
 fi
 
+# --- npx (ships with Node/npm; load-bearing for hyperframes + skills) -------
+if command -v npx >/dev/null 2>&1; then ok "npx"
+else bad "npx — not found (ships with Node/npm)"; hint "reinstall Node.js from https://nodejs.org (bundles npm/npx)"; REQUIRED_FAIL=1; fi
+
 # --- Python >= 3.10 --------------------------------------------------------
 if command -v python3 >/dev/null 2>&1; then
   PY_V="$(python3 --version 2>&1 | awk '{print $2}')"
@@ -109,27 +113,35 @@ for bin in ffmpeg ffprobe; do
 done
 
 # --- chrome-headless-shell (user-scoped; auto-installable) -----------------
-# hyperframes doctor is the source of truth for the render browser.
-if command -v npx >/dev/null 2>&1 && npx --yes hyperframes doctor >/dev/null 2>&1; then
+# hyperframes doctor is the source of truth for the render browser. Capture its
+# --json output ONCE and read the per-check Chrome `ok` (NOT doctor's exit code
+# or top-level `ok`, which goes false when unrelated checks like Docker fail).
+CHROME_OK=""; DOC_OUT=""
+if command -v npx >/dev/null 2>&1; then
+  DOC_OUT="$(npx --yes hyperframes doctor --json 2>/dev/null)"
+  CHROME_OK="$(printf '%s' "$DOC_OUT" | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{const c=JSON.parse(d).checks.find(x=>x.name==="Chrome");process.stdout.write(c?(c.ok?"1":"0"):"")}catch(e){}})' 2>/dev/null)"
+fi
+if [ "$CHROME_OK" = 1 ]; then
   ok "chrome-headless-shell (hyperframes doctor passed)"
 else
-  if npx --yes hyperframes doctor 2>&1 | grep -qi 'chrome'; then
+  if [ "$CHROME_OK" = 0 ]; then
     bad "chrome-headless-shell — not detected by hyperframes doctor"
   else
-    warn "could not run hyperframes doctor (Node/npx issue above?)"
+    bad "chrome-headless-shell — hyperframes doctor could not run (Node/npx issue above)"
   fi
   if [ "$FIX" -eq 1 ] && command -v npx >/dev/null 2>&1; then
     printf '      %sinstalling chrome-headless-shell…%s\n' "$DIM" "$RST"
-    npx --yes puppeteer browsers install chrome-headless-shell && ok "chrome-headless-shell installed"
+    if npx --yes puppeteer browsers install chrome-headless-shell; then ok "chrome-headless-shell installed"
+    else bad "chrome-headless-shell install failed"; hint "retry: npx puppeteer browsers install chrome-headless-shell"; REQUIRED_FAIL=1; fi
   else
     hint "npx puppeteer browsers install chrome-headless-shell   (one-time, ~170MB)"
-    [ "$FIX" -eq 0 ] && REQUIRED_FAIL=1
+    REQUIRED_FAIL=1
   fi
 fi
 
 # --- hyperframes CLI (auto via npx; only needs network) --------------------
-if command -v npx >/dev/null 2>&1 && npx --yes hyperframes --version >/dev/null 2>&1; then
-  ok "hyperframes CLI ($(npx --yes hyperframes --version 2>/dev/null))"
+if command -v npx >/dev/null 2>&1 && HF_VER="$(npx --yes hyperframes --version 2>/dev/null)"; then
+  ok "hyperframes CLI ($HF_VER)"
 else
   bad "hyperframes CLI — not reachable"; hint "npm i -g hyperframes  (or rely on npx; needs network)"; REQUIRED_FAIL=1
 fi
@@ -146,7 +158,7 @@ check_skill() { # name  required(1/0)  install-cmd
     [ -f "$home/$name/SKILL.md" ] && { found="$home"; break; }
   done
   if [ -n "$found" ]; then ok "$name skill ($found)"; return; fi
-  if [ "$FIX" -eq 1 ] && command -v npx >/dev/null 2>&1; then
+  if [ "$FIX" -eq 1 ] && [ -n "$inst" ] && command -v npx >/dev/null 2>&1; then
     printf '      %sinstalling %s skill…%s\n' "$DIM" "$name" "$RST"
     if npx --yes skills add "$inst" >/dev/null 2>&1; then ok "$name skill installed"; return; fi
     warn "auto-install of $name skill failed — run: npx skills add $inst"
@@ -154,11 +166,11 @@ check_skill() { # name  required(1/0)  install-cmd
   if [ "$required" -eq 1 ]; then
     bad "$name skill — not found"; hint "npx skills add $inst"; REQUIRED_FAIL=1
   else
-    warn "$name skill — not found (recommended)"; hint "npx skills add $inst"
+    warn "$name skill — not found (recommended)"; [ -n "$inst" ] && hint "npx skills add $inst"
   fi
 }
 check_skill hyperframes 1 heygen-com/hyperframes
-check_skill gsap        0 heygen-com/hyperframes   # gsap ships alongside hyperframes
+check_skill gsap        0 ""   # gsap is bundled inside the hyperframes skill — no separate install
 
 # ===========================================================================
 section "Recommended"
@@ -172,11 +184,11 @@ else
   hint "get a key at https://elevenlabs.io, then: export ELEVENLABS_API_KEY=..."
 fi
 
-# --- Whisper (user-scoped pip; auto-installable) ---------------------------
-if command -v whisper >/dev/null 2>&1; then
-  ok "whisper (voiceover timing verification)"
-elif command -v npx >/dev/null 2>&1 && npx --yes hyperframes transcribe --help >/dev/null 2>&1; then
+# --- Whisper (transcribe-preferred; standalone whisper is the fallback) ----
+if command -v npx >/dev/null 2>&1 && npx --yes hyperframes transcribe --help >/dev/null 2>&1; then
   ok "hyperframes transcribe (preferred timing verifier; standalone whisper optional)"
+elif command -v whisper >/dev/null 2>&1; then
+  ok "whisper (voiceover timing verification)"
 else
   if [ "$FIX" -eq 1 ] && command -v pip3 >/dev/null 2>&1; then
     printf '      %sinstalling openai-whisper (pip --user)…%s\n' "$DIM" "$RST"
@@ -228,7 +240,7 @@ fi
 echo
 if [ "$REQUIRED_FAIL" -eq 0 ]; then
   printf '%s%s✓ All required dependencies satisfied.%s\n' "$BOLD" "$GRN" "$RST"
-  [ "$FIX" -eq 0 ] && printf '%s  Re-run with --fix to auto-install missing recommended/optional deps.%s\n' "$DIM" "$RST"
+  [ "$FIX" -eq 0 ] && printf '%s  Re-run with --fix to auto-install the user-scoped recommended/optional deps; sudo/system and env-var items are printed, not installed.%s\n' "$DIM" "$RST"
   exit 0
 else
   printf '%s%s✗ Missing required dependencies (see ✗ above).%s\n' "$BOLD" "$RED" "$RST"
