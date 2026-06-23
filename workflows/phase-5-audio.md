@@ -271,8 +271,8 @@ ffmpeg -y -i voiceover-normalized.mp3 -i background-music.mp3 \
          equalizer=f=2500:t=q:w=1:g=-3,
          afade=t=in:st=0:d=2,
          afade=t=out:st=${FADE_OUT_START}:d=4,
-         aresample=44100[music];
-    [0:a]aresample=44100,asplit=2[vo][key];
+         aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo[music];
+    [0:a]aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,asplit=2[vo][key];
     [music][key]sidechaincompress=threshold=0.05:ratio=3:attack=150:release=900[ducked];
     [vo][ducked]amix=inputs=2:duration=first:dropout_transition=0:normalize=0,
                 alimiter=limit=0.89,
@@ -303,8 +303,13 @@ What each stage does — tune by ear, the numbers are starting points, not targe
   which *undoes the sidechain duck and fights the fades* — verified: with a dynamic master the music
   measures **louder** under speech than in the gaps. If you need to hit -16 LUFS more exactly,
   correct with a **constant** gain after validation (below), never a dynamic pass.
-- **`aresample=44100`** — the music-branch `loudnorm` can internally switch to 192 kHz; the explicit
-  resamples keep the `sidechaincompress`/`amix` inputs rate-matched and the MP3 encoder happy.
+- **`aformat=…:channel_layouts=stereo` on both legs (not `aresample`)** — `sidechaincompress`
+  requires its two inputs to share sample format, rate, **and channel layout**; ElevenLabs (and the
+  `hyperframes tts` fallback) often emit a **mono** voiceover, and mixing a mono key against a stereo
+  music bed makes the filter abort with `Error reinitializing filters! Failed to inject frame into
+  filter network`. `aformat` forces both legs to stereo/44.1k/fltp up front — a superset of the old
+  `aresample=44100` (which fixed only the rate). The music-branch `loudnorm` can also internally
+  switch to 192 kHz, so pinning the rate here keeps the `amix`/MP3 encoder happy too.
 
 **Critical:** keep `amix … normalize=0`. The default `normalize=1` divides each input by the input
 count (a hidden -6 dB per track), which would gut the already-quiet bed. Set level via the music
@@ -436,6 +441,7 @@ npx hyperframes doctor
 Known issues:
 
 - **`HeadlessExperimental.beginFrame' wasn't found`** — Chromium 147+ removed this protocol. The HyperFrames CLI from v0.4.2 onwards auto-detects and falls back to screenshot mode. If you're on a pinned older CLI, set the escape hatch: `export PRODUCER_FORCE_SCREENSHOT=true` before render.
+- **`Protocol error (Page.captureScreenshot): Unable to capture screenshot`** — the host's headless Chrome can't screenshot (observed on WSL2; can also hit sandboxed/container hosts). `doctor` passes and the composition compiles, but capture dies. Render in Docker instead — the CLI ships a containerized path: `npx hyperframes render . --output out/final.mp4 --docker` (needs Docker running; the first run pulls the image). On machines with ≤8 GB RAM the CLI auto-enables low-memory mode, which *forces the same screenshot capture* and can fail again inside Docker too — add `--no-low-memory-mode` to switch back to `beginframe` capture: `npx hyperframes render . --output out/final.mp4 --docker --no-low-memory-mode`. Output is identical.
 - **Render hangs ~120 seconds then times out** — HyperFrames is trying to use system Chrome instead of `chrome-headless-shell`. Fix:
   ```bash
   npx puppeteer browsers install chrome-headless-shell

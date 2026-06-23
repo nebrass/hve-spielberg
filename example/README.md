@@ -59,12 +59,15 @@ ffmpeg -y -i voiceover-normalized.mp3 -i background-music.mp3 \
   -filter_complex "
     [1:a]atrim=0:60,loudnorm=I=-30:TP=-3:LRA=11,
          highpass=f=100,equalizer=f=2500:t=q:w=1:g=-3,
-         afade=t=in:st=0:d=2,afade=t=out:st=56:d=4,aresample=44100[music];
-    [0:a]aresample=44100,asplit=2[vo][key];
+         afade=t=in:st=0:d=2,afade=t=out:st=56:d=4,aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo[music];
+    [0:a]aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,asplit=2[vo][key];
     [music][key]sidechaincompress=threshold=0.05:ratio=3:attack=150:release=900[ducked];
     [vo][ducked]amix=inputs=2:duration=first:dropout_transition=0:normalize=0,
                 alimiter=limit=0.89,aresample=44100[out]" \
   -map "[out]" -c:a libmp3lame -q:a 2 voiceover-with-music.mp3
+# ↑ aformat (not bare aresample) on BOTH legs: ElevenLabs/tts often emit a MONO voiceover, and
+#   sidechaincompress aborts ("Failed to inject frame into filter network") if the key and music
+#   differ in channel layout. Forcing both to stereo/44.1k up front avoids it.
 
 # 5. Run quality gates + render
 npx hyperframes doctor
@@ -73,6 +76,12 @@ npx hyperframes inspect  . --samples 12
 npx hyperframes validate .
 mkdir -p out
 npx hyperframes render   . --output out/final.mp4 --quality high
+#   On WSL2 (and some sandboxed hosts) native render fails at
+#   "Protocol error (Page.captureScreenshot)"; add --docker to render in a container
+#   (needs Docker running): npx hyperframes render . --output out/final.mp4 --quality high --docker
+#   On machines with <=8 GB RAM, also add --no-low-memory-mode — low-memory mode forces the same
+#   screenshot capture that fails; it switches Docker back to beginframe capture:
+#   npx hyperframes render . --output out/final.mp4 --quality high --docker --no-low-memory-mode
 ```
 
 Render time: ~20–30s on a 16-core machine with hardware GPU.
