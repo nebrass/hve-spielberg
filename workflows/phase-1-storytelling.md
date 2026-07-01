@@ -2,6 +2,27 @@
 
 Build the narrative structure and visual plan. Reads `context.md` from Phase 0.
 
+## The creative brief — user-owned selections (present them, don't decide them)
+
+This phase collects the choices that define how the video looks and sounds. **These are the
+user's to make, not yours to infer** (see `SKILL.md` § "creative instinct governs craft, not the
+user's choices"). Steps 1.1–1.5 each present a `{"questions": [...]}` block — you **must** surface
+every one as a native prompt, even when your Phase-0 analysis makes the "obvious" choice feel
+settled. Pre-highlight a smart default and say why you recommend it, but let the user pick. The
+levers, in order:
+
+| Step | Choice | Never skip because… |
+|---|---|---|
+| 1.1 | Duration · Theme (light/dark) · Aspect ratio | "it's obviously a 60s 16:9" — the user may want a 9:16 short |
+| 1.2 | **Visual identity / design system** (10 brands, a named style, or derive) | "it's a dev tool, so Vercel" — brand is the single most visible choice; always show the picker |
+| 1.3 | Voiceover voice | "Matilda is the default" — voice sets the whole tone |
+| 1.5 | Section transition · speed | "crossfade is fine" — the user may want the branded swoosh |
+
+Present them as a short sequence (or, if your runtime supports multi-question prompts, batch 1.1
+together as shown). Record every answer in `project-plan.md`. Do not advance to the storyboard
+until the identity (Step 1.2) and voice (Step 1.3) are chosen — a storyboard written before the
+brand is picked bakes in the wrong look.
+
 ## Step 1.1: Duration & Theme
 
 ```json
@@ -45,7 +66,11 @@ Record the choice in `project-plan.md`. Phase 3 scene templates and the Phase 4 
 
 ## Step 1.2: Visual Identity (3 strategies)
 
-Three ways to lock in the visual identity. Pick the most specific one that fits — each is faster than the next.
+The single most visible choice in the whole video. **Always present this picker** — never
+pre-select a strategy or a brand on the user's behalf from your Phase-0 read (that's the exact
+"agent silently picked Vercel" failure). You may *recommend* one (e.g. "your commits look like a
+dev tool — Vercel or Linear would fit") and pre-highlight it, but the user chooses. Three ways to
+lock in the identity:
 
 ```json
 {
@@ -53,14 +78,17 @@ Three ways to lock in the visual identity. Pick the most specific one that fits 
     "question": "How should the visual identity be set?",
     "header": "Identity",
     "options": [
-      { "label": "Use a curated design system (fastest)", "description": "Pick a known brand: Stripe, Linear, Apple, Notion, Vercel, Airbnb, GitHub, Cal, Arc, Bento. Skips brand extraction entirely; Phase 3 copies design-systems/<name>/DESIGN.md straight into the project. Best when the user says 'make it look like X'." },
-      { "label": "Pick a HyperFrames named style (medium)", "description": "Pick from 8 styles: Swiss Pulse, Velvet Standard, Deconstructed, Maximalist Type, Data Drift, Soft Signal, Folk Frequency, Shadow Cut. Phase 3 seeds the project's DESIGN.md from the named style; still allows minor screenshot-based tuning." },
-      { "label": "Derive from screenshots (default)", "description": "Phase 3 extracts colors, typography, and shape language from the captured app screenshots. Best when the user wants an identity that matches their actual product." }
+      { "label": "Use a curated design system", "description": "Pick a known brand: Stripe, Linear, Apple, Notion, Vercel, Airbnb, GitHub, Cal, Arc, Bento. Phase 3 copies design-systems/<name>/DESIGN.md straight into the project. Best when you want a specific brand's look." },
+      { "label": "Pick a HyperFrames named style", "description": "Pick from 8 styles: Swiss Pulse, Velvet Standard, Deconstructed, Maximalist Type, Data Drift, Soft Signal, Folk Frequency, Shadow Cut. Phase 3 seeds DESIGN.md from the named style; still allows minor screenshot-based tuning." },
+      { "label": "Derive from the captured screenshots", "description": "Phase 3 extracts colors, typography, and shape language from the app's own screenshots. Best when you want the video to match the product's existing look exactly." }
     ],
     "multiSelect": false
   }]
 }
 ```
+
+**If "Use a curated design system" is chosen**, immediately present the brand picker below — do not
+pick a brand yourself.
 
 ### If "curated design system" was picked
 
