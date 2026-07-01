@@ -110,4 +110,8 @@ Generate `context.md` from `templates/context.md` with all gathered information.
 > "Discovery complete. Here's what I understand about your product and audience:
 > [Summary of context.md]
 >
+> Next, Phase 1 is where **you** choose how the video looks and sounds — visual identity / design
+> system, duration, theme, aspect ratio, voice, and transitions. I'll recommend options based on
+> what I found, but the picks are yours.
+>
 > Ready to move to Phase 1: Storytelling?"
